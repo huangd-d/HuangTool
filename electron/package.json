@@ -1,0 +1,22 @@
+{
+  "name": "electron-doc",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "main.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "dependencies": {
+    "electron": "^41.1.1"
+  },
+  "devDependencies": {
+    "electron-reloader": "^1.2.3"
+  }
+}
