@@ -1,72 +1,29 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import WindowControls from './components/WindowControls.vue'
 
-const docsDirectories = ref([])
-const loading = ref(false)
-const error = ref('')
-const selectedDoc = ref('')
-
-async function loadDocsDirectories() {
-  if (window.electronAPI) {
-    loading.value = true
-    error.value = ''
-    try {
-      docsDirectories.value = await window.electronAPI.getDocsDirectories()
-    } catch (err) {
-      error.value = '获取文档目录失败'
-      console.error('Error loading docs directories:', err)
-    } finally {
-      loading.value = false
-    }
-  } else {
-    // 开发模式下的模拟数据
-    // docsDirectories.value = ['vue', 'vite']
-  }
-}
-
-function openDocWindow(dir) {
-  console.log('openDocWindow---', dir);
-  selectedDoc.value = dir
-  // debugger
-  // if (window.electronAPI && window.electronAPI.openDocWindow) {
-  //   window.electronAPI.openDocWindow(dir)
-  // } else {
-  //   // 开发模式下的模拟行为
-  //   // window.open(`/docs/${dir}`, '_blank')
-  // }
-}
-
-onMounted(() => {
-  loadDocsDirectories()
-})
+// App.vue 现在只负责布局和导航
 </script>
 
 <template>
   <div class="app">
     <header class="header">
-      <h1>文档管理系统</h1>
+      <h1>综合工具平台</h1>
+      <div class="nav-controls">
+        <nav class="main-nav">
+          <router-link to="/api" class="nav-item">接口调用</router-link>
+          <router-link to="/office" class="nav-item">Office 预览</router-link>
+          <router-link to="/docs" class="nav-item">技术文档</router-link>
+        </nav>
+        <WindowControls />
+      </div>
     </header>
     <main class="main">
-      <nav class="sidebar">
-        <h2>文档目录</h2>
-        <ul>
-          <li v-if="loading">加载中...</li>
-          <li v-else-if="error">{{ error }}</li>
-          <li v-else-if="docsDirectories.length === 0">暂无文档目录</li>
-          <li v-for="dir in docsDirectories" :key="dir">
-            <button @click="openDocWindow(dir)" class="doc-item">
-              {{ dir.charAt(0).toUpperCase() + dir.slice(1) }} 文
-            </button>
-          </li>
-        </ul>
-      </nav>
-      <div class="content">
-        <webview v-if="selectedDoc" :src="`app://${selectedDoc}`" class="doc-viewer"></webview>
-        <div v-else class="welcome">
-          <h2>欢迎使用文档管理系统</h2>
-          <p>请从左侧选择文档目录查看详细内容</p>
-        </div>
-      </div>
+      <router-view v-slot="{ Component }">
+        <transition name="fade" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
     </main>
   </div>
 </template>
@@ -81,68 +38,61 @@ onMounted(() => {
 .header {
   background-color: #42b883;
   color: white;
-  padding: 1rem;
-  text-align: center;
-}
-
-.main {
+  padding: 0.5rem 1rem;
   display: flex;
-  flex: 1;
-  overflow: hidden;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar {
-  width: 200px;
-  background-color: #f5f5f5;
-  padding: 1rem;
-  border-right: 1px solid #ddd;
-  overflow-y: auto;
+.header h1 {
+  margin: 0;
+  font-size: 1.5rem;
 }
 
-.sidebar h2 {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
-  color: #333;
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
-.sidebar ul {
-  list-style: none;
-  padding: 0;
+.main-nav {
+  display: flex;
+  gap: 1rem;
 }
 
-.sidebar li {
-  margin-bottom: 0.5rem;
-}
-
-.doc-item {
-  width: 100%;
-  padding: 0.5rem;
-  border: none;
+.nav-item {
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
   border-radius: 4px;
-  background-color: white;
-  text-align: left;
-  cursor: pointer;
-  font-size: 1rem;
   transition: background-color 0.2s;
 }
 
-.doc-item:hover {
-  background-color: #e0e0e0;
+.nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
-.content {
+.nav-item.router-link-active {
+  background-color: rgba(255, 255, 255, 0.3);
+  font-weight: bold;
+}
+
+.main {
   flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
+  overflow: auto;
+  background-color: #f9f9f9;
 }
 
-.content h2 {
-  color: #333;
-  margin-bottom: 1rem;
+/* 过渡动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
 }
 
-.content p {
-  color: #666;
-  line-height: 1.6;
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
