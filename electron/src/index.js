@@ -17,7 +17,7 @@ try {
 
 // 导入模块
 import { registerProtocol, handleProtocol } from './protocol/protocolHandler.js'
-import { createWindow, registerWindowEvents } from './window/windowManager.js'
+import { createWindow, registerWindowEvents, initializeFirstTab } from './window/windowManager.js'
 import { registerApiHandlers } from './api/apiHandler.js'
 import { registerDocsHandlers } from './api/docsHandler.js'
 
@@ -28,6 +28,9 @@ registerProtocol()
 app.whenReady().then(() => {
   // 创建主窗口
   createWindow()
+
+  // 初始化第一个页签
+  initializeFirstTab()
 
   // 注册协议处理
   handleProtocol()

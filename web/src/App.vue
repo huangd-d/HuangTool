@@ -1,24 +1,20 @@
 <script setup>
-import { ref, computed, watch, provide } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 import WindowControls from './components/WindowControls.vue'
-
-const route = useRoute()
-const router = useRouter()
 
 // 页签列表
 const tabs = ref([
-  { id: 1, title: '首页', path: '/' }
+  { id: '1', title: '首页', path: '/' }
 ])
 
 // 当前激活的页签
-const activeTab = computed(() => {
-  return tabs.value.find(tab => tab.path === route.path) || tabs.value[0]
-})
+const activeTabId = ref('1')
 
 // 切换页签
 const switchTab = (tab) => {
-  router.push(tab.path)
+  if (window.electronAPI) {
+    window.electronAPI.switchTab(tab.id)
+  }
 }
 
 // 关闭页签
@@ -29,48 +25,52 @@ const closeTab = (event, tabId) => {
   if (tab && tab.path === '/') {
     return
   }
-  // 不能关闭当前激活的页签
-  if (tab && tab.path === route.path) {
-    // 切换到其他页签
-    const currentIndex = tabs.value.findIndex(t => t.id === tabId)
-    const newTab = currentIndex > 0 ? tabs.value[currentIndex - 1] : tabs.value[0]
-    router.push(newTab.path)
+  if (window.electronAPI) {
+    window.electronAPI.closeTab(tabId)
   }
-  // 从列表中移除页签
-  tabs.value = tabs.value.filter(t => t.id !== tabId)
 }
 
 // 新建标签页
 const addNewTab = () => {
-  const newTab = {
-    id: Date.now(),
-    title: '新标签页',
-    path: '/' + Date.now()
+  if (window.electronAPI) {
+    window.electronAPI.createTab('新标签页', '/' + Date.now())
   }
-  tabs.value.push(newTab)
-  router.push(newTab.path)
 }
 
 // 创建指定页面的新页签
 const createTab = (title, path) => {
-  // 检查是否已经存在该路径的页签
-  const existingTab = tabs.value.find(tab => tab.path === path)
-  if (existingTab) {
-    // 如果已存在，直接切换到该页签
-    router.push(path)
-  } else {
-    // 如果不存在，创建新页签
-    const newTab = {
-      id: Date.now(),
-      title: title,
-      path: path
-    }
-    tabs.value.push(newTab)
-    router.push(path)
+  if (window.electronAPI) {
+    window.electronAPI.createTab(title, path)
   }
 }
 
+// 监听页签创建事件
+const handleTabCreated = (tab) => {
+  tabs.value.push(tab)
+}
+
+// 监听页签切换事件
+const handleTabSwitched = (tabId) => {
+  activeTabId.value = tabId
+}
+
+// 监听页签关闭事件
+const handleTabClosed = (tabId) => {
+  tabs.value = tabs.value.filter(t => t.id !== tabId)
+}
+
+// 组件挂载时设置事件监听
+onMounted(() => {
+  if (window.electronAPI) {
+    // 监听页签事件
+    window.electronAPI.onTabCreated(handleTabCreated)
+    window.electronAPI.onTabSwitched(handleTabSwitched)
+    window.electronAPI.onTabClosed(handleTabClosed)
+  }
+})
+
 // 提供创建页签的方法给子组件
+import { provide } from 'vue'
 provide('createTab', createTab)
 </script>
 
@@ -83,7 +83,7 @@ provide('createTab', createTab)
           v-for="tab in tabs" 
           :key="tab.id"
           class="tab"
-          :class="{ active: tab.path === route.path }"
+          :class="{ active: tab.id === activeTabId }"
           @click="switchTab(tab)"
         >
           <span class="tab-title">{{ tab.title }}</span>

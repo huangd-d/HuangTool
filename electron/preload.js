@@ -22,5 +22,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 窗口控制
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   maximizeWindow: () => ipcRenderer.send('maximize-window'),
-  closeWindow: () => ipcRenderer.send('close-window')
+  closeWindow: () => ipcRenderer.send('close-window'),
+  // 页签管理
+  createTab: (title, path) => ipcRenderer.send('create-tab', { title, path }),
+  switchTab: (tabId) => ipcRenderer.send('switch-tab', tabId),
+  closeTab: (tabId) => ipcRenderer.send('close-tab', tabId),
+  // 页签事件监听
+  onTabCreated: (callback) => ipcRenderer.on('tab-created', (event, tab) => callback(tab)),
+  onTabSwitched: (callback) => ipcRenderer.on('tab-switched', (event, tabId) => callback(tabId)),
+  onTabClosed: (callback) => ipcRenderer.on('tab-closed', (event, tabId) => callback(tabId))
 })
