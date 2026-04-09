@@ -10,7 +10,7 @@
     "doc": "docs"
   },
   "scripts": {
-    "start": "electron .",
+    "start": "set NODE_ENV=development && electron .",
     "build": "npm run build:web && electron-builder",
     "build:web": "cd ../web && npm run build && cd ../electron"
   },

@@ -1,4 +1,5 @@
-import { app, protocol, net, fs } from 'electron'
+import { app, protocol, net } from 'electron'
+import fs from 'fs'
 import path from 'path'
 import { pathToFileURL } from 'url'
 

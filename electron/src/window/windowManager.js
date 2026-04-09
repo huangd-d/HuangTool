@@ -19,17 +19,18 @@ export function createWindow() {
   })
 
   // 加载打包文件
-  // mainWindow.loadFile(path.join(__dirname, '../web/dist/index.html'))
-  
+  // mainWindow.loadFile(path.join(app.getAppPath(), '/index.html'));
+  mainWindow.loadURL('http://localhost:5173');
   // 开发环境加载 Vite 地址
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.loadURL('http://localhost:3000');
-    // 可选：自动打开开发者工具
-    mainWindow.webContents.openDevTools();
-  } else {
-    // 生产环境加载打包文件
-    mainWindow.loadFile(path.join(app.getAppPath(), '../web/dist/index.html'));
-  }
+  // if (process.env.NODE_ENV === 'development') {
+  //   // console.log('development');
+  //   mainWindow.loadURL('http://localhost:5173');
+  //   // 可选：自动打开开发者工具
+  //   mainWindow.webContents.openDevTools();
+  // } else {
+  //   // 生产环境加载打包文件
+  //   mainWindow.loadFile(path.join(app.getAppPath(), '../web/dist/index.html'));
+  // }
 
   return mainWindow
 }
@@ -78,24 +79,24 @@ export function registerWindowEvents() {
 }
 
 // 打开文档窗口
-export function openDocWindow(dir) {
-  const docWindow = new BrowserWindow({
-    width: 1000,
-    height: 800,
-    webPreferences: {
-      preload: path.join(app.getAppPath(), 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false
-    }
-  })
-  console.log('dir---', dir);
+// export function openDocWindow(dir) {
+//   const docWindow = new BrowserWindow({
+//     width: 1000,
+//     height: 800,
+//     webPreferences: {
+//       preload: path.join(app.getAppPath(), 'preload.js'),
+//       contextIsolation: true,
+//       nodeIntegration: false
+//     }
+//   })
+//   console.log('dir---', dir);
 
-  // 加载对应的文档页面
-  docWindow.loadURL(`app://${dir}`);
+//   // 加载对应的文档页面
+//   docWindow.loadURL(`app://${dir}`);
 
-  if (process.env.NODE_ENV === 'development') {
-    docWindow.webContents.openDevTools();
-  }
+//   if (process.env.NODE_ENV === 'development') {
+//     docWindow.webContents.openDevTools();
+//   }
 
-  return true
-}
+//   return true
+// }
