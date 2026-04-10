@@ -59,6 +59,7 @@ const closeWindow = () => {
   align-items: center;
   gap: 8px;
   padding: 0 16px;
+  -webkit-app-region: no-drag; /* 窗口控制按钮区域不可拖动 */
 }
 
 .control-btn {

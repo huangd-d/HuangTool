@@ -18,8 +18,13 @@ export function createWindow() {
     }
   })
 
-  // 加载前端应用
-  mainWindow.loadURL('http://localhost:5174');
+  // 加载前端应用（壳视图：只有头部栏）
+  mainWindow.loadURL('http://localhost:5173/?shell=true');
+
+  // 自动打开开发者工具（开发环境）
+  if (process.env.NODE_ENV === 'development') {
+    mainWindow.webContents.openDevTools();
+  }
 
   return mainWindow
 }

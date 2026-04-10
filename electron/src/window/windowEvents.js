@@ -1,6 +1,6 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import { getMainWindow } from './mainWindowManager.js'
-import { createTab, switchTab, closeTab, getActiveTabId } from './tabManager.js'
+import { createTab, switchTab, closeTab, getActiveTabId, resizeViews } from './tabManager.js'
 
 // 注册窗口控制事件
 export function registerWindowEvents() {
@@ -50,10 +50,7 @@ export function registerWindowEvents() {
   const mainWindow = getMainWindow()
   if (mainWindow) {
     mainWindow.on('resize', () => {
-      const activeTabId = getActiveTabId()
-      if (activeTabId) {
-        switchTab(activeTabId); // 重新设置当前页签的大小
-      }
+      resizeViews(); // 使用专门的 resize 函数
     });
   }
 
