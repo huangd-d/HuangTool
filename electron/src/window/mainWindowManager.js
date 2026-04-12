@@ -22,7 +22,7 @@ export function createWindow() {
   mainWindow.loadURL('http://localhost:5173/?shell=true');
 
   // 强制打开开发者工具（开发环境）
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
+  // mainWindow.webContents.openDevTools({ mode: 'detach' });
 
   return mainWindow
 }

@@ -4,7 +4,7 @@
     <div class="sidebar-section">
       <div class="section-header">
         <h3>项目</h3>
-        <button @click="$emit('add-project')" class="add-btn">+</button>
+        <button @click="showProjectDialog = true" class="add-btn">+</button>
       </div>
       <ul class="project-list">
         <li v-for="project in projects" 
@@ -13,7 +13,7 @@
             @click="$emit('select-project', project)">
           {{ project.name }}
           <div class="project-actions">
-            <button @click.stop="$emit('edit-project', project)" class="action-btn edit">✏️</button>
+            <button @click.stop="editProject(project)" class="action-btn edit">✏️</button>
             <button @click.stop="$emit('delete-project', project)" class="action-btn delete">🗑️</button>
           </div>
         </li>
@@ -24,7 +24,7 @@
     <div class="sidebar-section" v-if="selectedProject">
       <div class="section-header">
         <h3>分类</h3>
-        <button @click="$emit('add-category')" class="add-btn">+</button>
+        <button @click="showCategoryDialog = true" class="add-btn">+</button>
       </div>
       <ul class="category-list">
         <li v-for="category in categories" 
@@ -33,7 +33,7 @@
             @click="$emit('select-category', category)">
           {{ category.name }}
           <div class="category-actions">
-            <button @click.stop="$emit('edit-category', category)" class="action-btn edit">✏️</button>
+            <button @click.stop="editCategory(category)" class="action-btn edit">✏️</button>
             <button @click.stop="$emit('delete-category', category)" class="action-btn delete">🗑️</button>
           </div>
         </li>
@@ -44,7 +44,7 @@
     <div class="sidebar-section" v-if="selectedCategory">
       <div class="section-header">
         <h3>接口</h3>
-        <button @click="$emit('add-endpoint')" class="add-btn">+</button>
+        <button @click="addEndpoint()" class="add-btn">+</button>
       </div>
       <ul class="endpoint-list">
         <li v-for="endpoint in endpoints" 
@@ -55,16 +55,42 @@
             {{ endpoint.method }}
           </span>
           <div class="endpoint-actions">
-            <button @click.stop="$emit('edit-endpoint', endpoint)" class="action-btn edit">✏️</button>
+            <button @click.stop="editEndpoint(endpoint)" class="action-btn edit">✏️</button>
             <button @click.stop="$emit('delete-endpoint', endpoint)" class="action-btn delete">🗑️</button>
           </div>
         </li>
       </ul>
     </div>
+
+    <!-- 项目对话框 -->
+    <ProjectDialog 
+      v-model="showProjectDialog" 
+      :project="editingProject"
+      @save="handleSaveProject"
+    />
+
+    <!-- 分类对话框 -->
+    <CategoryDialog 
+      v-model="showCategoryDialog" 
+      :category="editingCategory"
+      @save="handleSaveCategory"
+    />
+
+    <!-- 接口对话框 -->
+    <EndpointDialog 
+      v-model="showEndpointDialog" 
+      :endpoint="editingEndpoint"
+      @save="handleSaveEndpoint"
+    />
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
+import ProjectDialog from './dialogs/ProjectDialog.vue'
+import CategoryDialog from './dialogs/CategoryDialog.vue'
+import EndpointDialog from './dialogs/EndpointDialog.vue'
+
 const props = defineProps({
   projects: {
     type: Array,
@@ -89,19 +115,113 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
-  'add-project',
-  'edit-project',
   'delete-project',
   'select-project',
-  'add-category',
-  'edit-category',
   'delete-category',
   'select-category',
-  'add-endpoint',
-  'edit-endpoint',
   'delete-endpoint',
-  'open-endpoint-tab'
+  'open-endpoint-tab',
+  'refresh-data'
 ])
+
+// 对话框状态
+const showProjectDialog = ref(false)
+const showCategoryDialog = ref(false)
+const showEndpointDialog = ref(false)
+
+// 编辑状态
+const editingProject = ref(null)
+const editingCategory = ref(null)
+const editingEndpoint = ref(null)
+
+// 打开项目对话框
+function editProject(project) {
+  editingProject.value = project
+  showProjectDialog.value = true
+}
+
+// 打开分类对话框
+function editCategory(category) {
+  editingCategory.value = category
+  showCategoryDialog.value = true
+}
+
+// 打开接口对话框
+function addEndpoint() {
+  editingEndpoint.value = null
+  showEndpointDialog.value = true
+}
+
+// 打开接口对话框
+function editEndpoint(endpoint) {
+  editingEndpoint.value = endpoint
+  showEndpointDialog.value = true
+}
+
+// 处理保存项目
+async function handleSaveProject(projectData) {
+  try {
+    if (editingProject.value) {
+      // 更新项目
+      await window.electronAPI.updateApiProject(projectData)
+    } else {
+      // 创建项目
+      await window.electronAPI.createApiProject(projectData)
+    }
+    emit('refresh-data')
+  } catch (error) {
+    console.error('Error saving project:', error)
+    alert('保存项目失败: ' + error.message)
+  }
+  showProjectDialog.value = false
+  editingProject.value = null
+}
+
+// 处理保存分类
+async function handleSaveCategory(categoryData) {
+  try {
+    if (editingCategory.value) {
+      // 更新分类
+      await window.electronAPI.updateApiCategory(props.selectedProject.name, { ...categoryData, id: editingCategory.value.id })
+    } else {
+      // 创建分类
+      await window.electronAPI.createApiCategory(props.selectedProject.name, categoryData)
+    }
+    emit('refresh-data')
+  } catch (error) {
+    console.error('Error saving category:', error)
+    alert('保存分类失败: ' + error.message)
+  }
+  showCategoryDialog.value = false
+  editingCategory.value = null
+}
+
+// 处理保存接口
+async function handleSaveEndpoint(endpointData) {
+  try {
+    if (editingEndpoint.value) {
+      // 更新接口
+      await window.electronAPI.updateApiEndpoint(
+        props.selectedProject.name, 
+        props.selectedCategory.id, 
+        { ...endpointData, id: editingEndpoint.value.id }
+      )
+    } else {
+      // 创建接口
+      await window.electronAPI.createApiEndpoint(
+        props.selectedProject.name, 
+        props.selectedCategory.id, 
+        endpointData
+      )
+    }
+    emit('refresh-data')
+  } catch (error) {
+    console.error('Error saving endpoint:', error)
+    alert('保存接口失败: ' + error.message)
+  }
+  showEndpointDialog.value = false
+  editingEndpoint.value = null
+}
 </script>
 
 <style scoped>

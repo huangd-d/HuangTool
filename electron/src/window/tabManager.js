@@ -31,6 +31,7 @@ export function createTab(title, tabPath) {
   view.webContents.loadURL(devUrl).catch(err => {
     console.error(`加载页面失败 [${tabId}]:`, err);
   });
+  view.webContents.openDevTools();
   
   // 开发环境下打开页签的开发者工具（可选，默认关闭）
   // if (process.env.NODE_ENV === 'development') {

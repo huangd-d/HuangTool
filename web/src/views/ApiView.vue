@@ -1,112 +1,69 @@
 <template>
-  <div class="api-view">
-    <div class="api-container">
-      <!-- 左侧导航 -->
-      <ApiSidebar
-        :projects="projects"
-        :categories="categories"
-        :endpoints="endpoints"
-        :selected-project="selectedProject"
-        :selected-category="selectedCategory"
-        @add-project="showProjectDialog = true"
-        @edit-project="editProject"
-        @delete-project="deleteProject"
-        @select-project="selectProject"
-        @add-category="showCategoryDialog = true"
-        @edit-category="editCategory"
-        @delete-category="deleteCategory"
-        @select-category="selectCategory"
-        @add-endpoint="addEndpoint"
-        @edit-endpoint="editEndpoint"
-        @delete-endpoint="deleteEndpoint"
-        @open-endpoint-tab="openEndpointTab"
-      />
+  <div class="api-container">
+    <!-- 左侧导航 -->
+    <ApiSidebar :projects="projects" :categories="categories" :endpoints="endpoints" :selected-project="selectedProject"
+      :selected-category="selectedCategory" @delete-project="deleteProject" @select-project="selectProject"
+      @delete-category="deleteCategory" @select-category="selectCategory" @delete-endpoint="deleteEndpoint"
+      @open-endpoint-tab="openEndpointTab" @refresh-data="loadProjects" />
 
-      <!-- 右侧内容 -->
-      <div class="api-content">
-        <!-- 通用配置 -->
-        <div class="config-panel" v-if="selectedProject">
-          <h3>通用配置</h3>
-          <div class="config-item">
-            <label>基础 URL:</label>
-            <input v-model="selectedProject.config.baseUrl" type="text" placeholder="https://api.example.com">
-          </div>
-          <div class="config-item">
-            <label>代理地址:</label>
-            <input v-model="selectedProject.config.proxy" type="text" placeholder="http://proxy.example.com:8080">
-          </div>
-          <div class="config-item">
-            <label>超时时间 (ms):</label>
-            <input v-model.number="selectedProject.config.timeout" type="number" placeholder="30000">
-          </div>
-          <div class="config-item">
-            <label>共用 Header (JSON):</label>
-            <textarea v-model="configHeaders" placeholder='{"Authorization": "Bearer token"}'></textarea>
-          </div>
-          <button @click="saveProjectConfig" class="save-btn">保存配置</button>
+    <!-- 右侧内容 -->
+    <div class="api-content">
+      <!-- 通用配置 -->
+      <div class="config-panel" v-if="selectedProject">
+        <h3>通用配置</h3>
+        <div class="config-item">
+          <label>基础 URL:</label>
+          <input v-model="selectedProject.config.baseUrl" type="text" placeholder="https://api.example.com">
+        </div>
+        <div class="config-item">
+          <label>代理地址:</label>
+          <input v-model="selectedProject.config.proxy" type="text" placeholder="http://proxy.example.com:8080">
+        </div>
+        <div class="config-item">
+          <label>共用 Header (JSON):</label>
+          <textarea v-model="configHeaders" placeholder='{"Authorization": "Bearer token"}'></textarea>
+        </div>
+        <div class="config-item">
+          <label>超时时间 (ms):</label>
+          <input v-model.number="selectedProject.config.timeout" type="number" placeholder="30000">
+          <button @click="saveProjectConfig" class="save-btn">保存通用配置</button>
         </div>
 
-        <!-- Tab 容器 -->
-        <div class="tab-container" v-if="tabs.length > 0">
-          <div class="tab-header">
-            <div v-for="tab in tabs" :key="tab.id" class="tab-item" :class="{ active: activeTabId === tab.id }">
-              <span @click="switchTab(tab.id)">{{ tab.name }}</span>
-              <button @click="closeTab(tab.id)" class="tab-close">×</button>
-            </div>
-          </div>
-          <div class="tab-content">
-            <div v-for="tab in tabs" :key="tab.id" class="tab-pane" :class="{ active: activeTabId === tab.id }">
-              <EndpointView 
-                :endpoint="tab.endpoint" 
-                :project-config="selectedProject?.config"
-                @send-request="handleSendRequest"
-              />
-            </div>
-          </div>
-        </div>
+      </div>
 
-        <!-- 空状态 -->
-        <div class="empty-state" v-if="tabs.length === 0 && selectedProject">
-          <h3>请选择一个接口</h3>
-          <p>从左侧列表中选择接口或创建新接口</p>
+      <!-- Tab 容器 -->
+      <div class="tab-container" v-if="tabs.length > 0">
+        <div class="tab-header">
+          <div v-for="tab in tabs" :key="tab.id" class="tab-item" :class="{ active: activeTabId === tab.id }">
+            <span @click="switchTab(tab.id)">{{ tab.name }}</span>
+            <button @click="closeTab(tab.id)" class="tab-close">×</button>
+          </div>
         </div>
-        <div class="empty-state" v-if="!selectedProject">
-          <h3>请选择或创建项目</h3>
-          <p>从左侧列表中选择项目或创建新项目</p>
+        <div class="tab-content">
+          <div v-for="tab in tabs" :key="tab.id" class="tab-pane" :class="{ active: activeTabId === tab.id }">
+            <EndpointView :endpoint="tab.endpoint" :project-config="selectedProject?.config"
+              @send-request="handleSendRequest" />
+          </div>
         </div>
       </div>
+
+      <!-- 空状态 -->
+      <div class="empty-state" v-if="tabs.length === 0 && selectedProject">
+        <h3>请选择一个接口</h3>
+        <p>从左侧列表中选择接口或创建新接口</p>
+      </div>
+      <div class="empty-state" v-if="!selectedProject">
+        <h3>请选择或创建项目</h3>
+        <p>从左侧列表中选择项目或创建新项目</p>
+      </div>
     </div>
-
-    <!-- 项目对话框 -->
-    <ProjectDialog 
-      v-model="showProjectDialog" 
-      :project="editingProject"
-      @save="handleSaveProject"
-    />
-
-    <!-- 分类对话框 -->
-    <CategoryDialog 
-      v-model="showCategoryDialog" 
-      :category="editingCategory"
-      @save="handleSaveCategory"
-    />
-
-    <!-- 接口对话框 -->
-    <EndpointDialog 
-      v-model="showEndpointDialog" 
-      :endpoint="editingEndpoint"
-      @save="handleSaveEndpoint"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import ApiSidebar from '../components/ApiSidebar.vue'
-import ProjectDialog from '../components/dialogs/ProjectDialog.vue'
-import CategoryDialog from '../components/dialogs/CategoryDialog.vue'
-import EndpointDialog from '../components/dialogs/EndpointDialog.vue'
-
+import EndpointView from '../components/EndpointView.vue'
 // 状态管理
 const projects = ref([])
 const categories = ref([])
@@ -115,16 +72,6 @@ const selectedProject = ref(null)
 const selectedCategory = ref(null)
 const tabs = ref([])
 const activeTabId = ref(null)
-
-// 对话框状态
-const showProjectDialog = ref(false)
-const showCategoryDialog = ref(false)
-const showEndpointDialog = ref(false)
-
-// 编辑状态
-const editingProject = ref(null)
-const editingCategory = ref(null)
-const editingEndpoint = ref(null)
 
 // 计算属性 - 配置 Headers 显示
 const configHeaders = computed({
@@ -168,7 +115,7 @@ async function selectProject(project) {
   selectedProject.value = project
   selectedCategory.value = null
   endpoints.value = []
-  
+
   // 直接使用项目数据中的分类
   categories.value = project.categories || []
   console.log('Categories:', categories.value)
@@ -178,33 +125,10 @@ async function selectProject(project) {
 async function selectCategory(category) {
   console.log('Selecting category:', category)
   selectedCategory.value = category
-  
+
   // 直接使用分类数据中的接口
   endpoints.value = category.endpoints || []
   console.log('Endpoints:', endpoints.value)
-}
-
-// 打开项目对话框
-function editProject(project) {
-  editingProject.value = project
-  showProjectDialog.value = true
-}
-
-// 处理保存项目
-async function handleSaveProject(projectData) {
-  try {
-    if (editingProject.value) {
-      // 更新项目
-      await window.electronAPI.updateApiProject(projectData)
-    } else {
-      // 创建项目
-      await window.electronAPI.createApiProject(projectData)
-    }
-    await loadProjects()
-  } catch (error) {
-    console.error('Error saving project:', error)
-    alert('保存项目失败: ' + error.message)
-  }
 }
 
 // 删除项目
@@ -227,35 +151,6 @@ async function deleteProject(project) {
   }
 }
 
-// 打开分类对话框
-function editCategory(category) {
-  editingCategory.value = category
-  showCategoryDialog.value = true
-}
-
-// 处理保存分类
-async function handleSaveCategory(categoryData) {
-  try {
-    if (editingCategory.value) {
-      // 更新分类
-      await window.electronAPI.updateApiCategory(selectedProject.value.name, { ...categoryData, id: editingCategory.value.id })
-    } else {
-      // 创建分类
-      await window.electronAPI.createApiCategory(selectedProject.value.name, categoryData)
-    }
-    // 重新加载项目以获取最新数据
-    await loadProjects()
-    // 重新选择当前项目以更新分类列表
-    const updatedProject = projects.value.find(p => p.id === selectedProject.value.id)
-    if (updatedProject) {
-      await selectProject(updatedProject)
-    }
-  } catch (error) {
-    console.error('Error saving category:', error)
-    alert('保存分类失败: ' + error.message)
-  }
-}
-
 // 删除分类
 async function deleteCategory(category) {
   if (confirm(`确定要删除分类 ${category.name} 吗？`)) {
@@ -272,55 +167,6 @@ async function deleteCategory(category) {
       console.error('Error deleting category:', error)
       alert('删除分类失败: ' + error.message)
     }
-  }
-}
-
-// 打开接口对话框
-function addEndpoint() {
-  console.log('Adding new endpoint')
-  editingEndpoint.value = null
-  showEndpointDialog.value = true
-}
-
-// 打开接口对话框
-function editEndpoint(endpoint) {
-  console.log('Editing endpoint:', endpoint)
-  editingEndpoint.value = endpoint
-  showEndpointDialog.value = true
-}
-
-// 处理保存接口
-async function handleSaveEndpoint(endpointData) {
-  try {
-    if (editingEndpoint.value) {
-      // 更新接口
-      await window.electronAPI.updateApiEndpoint(
-        selectedProject.value.name, 
-        selectedCategory.value.id, 
-        { ...endpointData, id: editingEndpoint.value.id }
-      )
-    } else {
-      // 创建接口
-      await window.electronAPI.createApiEndpoint(
-        selectedProject.value.name, 
-        selectedCategory.value.id, 
-        endpointData
-      )
-    }
-    // 重新加载项目以获取最新数据
-    await loadProjects()
-    // 重新选择当前项目和分类以更新接口列表
-    const updatedProject = projects.value.find(p => p.id === selectedProject.value.id)
-    if (updatedProject) {
-      await selectProject(updatedProject)
-      const updatedCategory = updatedProject.categories.find(c => c.id === selectedCategory.value.id)
-      if (updatedCategory) {
-        await selectCategory(updatedCategory)
-      }
-    }
-  } catch (error) {
-    console.error('Error saving endpoint:', error)
-    alert('保存接口失败: ' + error.message)
   }
 }
 
@@ -366,7 +212,7 @@ async function saveProjectConfig() {
           timeout: selectedProject.value.config?.timeout || 30000
         }
       }
-      
+
       await window.electronAPI.updateApiProject(projectData)
       alert('配置已保存')
       // 重新加载项目列表
@@ -381,7 +227,7 @@ async function saveProjectConfig() {
 // 打开接口 Tab
 function openEndpointTab(endpoint) {
   console.log('Opening endpoint tab:', endpoint)
-  
+
   // 确保 endpoint 有完整的 config 结构
   const endpointData = {
     ...endpoint,
@@ -395,7 +241,7 @@ function openEndpointTab(endpoint) {
       ...endpoint.config
     }
   }
-  
+
   // 检查是否已存在该接口的 tab
   const existingTab = tabs.value.find(tab => tab.endpoint.id === endpoint.id)
   if (existingTab) {
@@ -460,16 +306,11 @@ async function handleSendRequest(endpoint, projectConfig) {
 </script>
 
 <style scoped>
-.api-view {
+.api-container {
   height: 100%;
   display: flex;
-  flex-direction: column;
-}
-
-.api-container {
-  display: flex;
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
 }
 
 /* 右侧内容 */
@@ -496,15 +337,20 @@ async function handleSendRequest(endpoint, projectConfig) {
 }
 
 .config-item {
+  display: flex;
+  align-items: flex-start;
   margin-bottom: 15px;
 }
 
 .config-item label {
-  display: block;
-  margin-bottom: 5px;
+  flex-basis: 140px;
+  flex-shrink: 0;
+  padding-right: 6px;
+  height: 32px;
+  line-height: 32px;
   font-size: 12px;
-  font-weight: 500;
   color: #666;
+  text-align: right;
 }
 
 .config-item input,
@@ -524,6 +370,7 @@ async function handleSendRequest(endpoint, projectConfig) {
 }
 
 .save-btn {
+  margin-left: 6px;
   background: #42b883;
   color: white;
   border: none;
@@ -531,6 +378,7 @@ async function handleSendRequest(endpoint, projectConfig) {
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+  flex-shrink: 0;
 }
 
 .save-btn:hover {
