@@ -1,126 +1,212 @@
 <template>
   <div class="endpoint-view">
-    <!-- 接口信息 -->
-    <div class="endpoint-info">
-      <h3>{{ endpoint.name }}</h3>
-      <div class="info-row">
-        <span class="method-badge" :class="endpoint.method.toLowerCase()">
-          {{ endpoint.method }}
-        </span>
-        <span class="url">{{ endpoint.url }}</span>
-      </div>
+    <!-- 顶部请求栏 -->
+    <div class="request-bar">
+      <select v-model="endpoint.method" class="method-select" :class="endpoint.method.toLowerCase()">
+        <option value="GET">GET</option>
+        <option value="POST">POST</option>
+        <option value="PUT">PUT</option>
+        <option value="DELETE">DELETE</option>
+        <option value="PATCH">PATCH</option>
+      </select>
+      <input 
+        v-model="endpoint.url" 
+        type="text" 
+        class="url-input" 
+        placeholder="输入请求 URL"
+      />
+      <button @click="sendRequest" class="send-btn" :disabled="loading">
+        {{ loading ? '发送中...' : 'Send' }}
+      </button>
     </div>
 
-    <!-- 标签页 -->
-    <div class="endpoint-tabs">
-      <div class="tab-header">
-        <div 
-          v-for="tab in tabs" 
-          :key="tab.id" 
-          class="tab-item" 
-          :class="{ active: activeTabId === tab.id }"
-          @click="switchTab(tab.id)"
-        >
-          {{ tab.name }}
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <!-- 左侧请求区 -->
+      <div class="request-panel">
+        <!-- 标签页 -->
+        <div class="tabs-header">
+          <div 
+            v-for="tab in tabs" 
+            :key="tab.id" 
+            class="tab-item" 
+            :class="{ active: activeTabId === tab.id }"
+            @click="switchTab(tab.id)"
+          >
+            {{ tab.name }}
+          </div>
         </div>
-      </div>
-      <div class="tab-content">
-        <!-- 请求标签页 -->
-        <div v-if="activeTabId === 'request'" class="request-tab">
-          <!-- 请求参数 -->
-          <div class="param-section">
-            <h4>请求参数</h4>
+
+        <!-- 标签内容 -->
+        <div class="tabs-content">
+          <!-- Params 标签页 -->
+          <div v-if="activeTabId === 'params'" class="tab-pane">
             <div class="param-table">
-              <div class="param-header">
-                <div class="param-name">参数名</div>
-                <div class="param-value">值</div>
-                <div class="param-action">操作</div>
+              <div class="table-header">
+                <div class="col-enable"></div>
+                <div class="col-key">参数名</div>
+                <div class="col-value">值</div>
+                <div class="col-action">操作</div>
               </div>
-              <div v-for="(param, index) in endpoint.params" :key="index" class="param-row">
-                <div class="param-name">
+              <div v-for="(param, index) in endpoint.config.params" :key="index" class="table-row">
+                <div class="col-enable">
+                  <input type="checkbox" v-model="param.enabled" />
+                </div>
+                <div class="col-key">
                   <input v-model="param.name" type="text" placeholder="参数名">
                 </div>
-                <div class="param-value">
+                <div class="col-value">
                   <input v-model="param.value" type="text" placeholder="参数值">
                 </div>
-                <div class="param-action">
-                  <button @click="removeParam(index)" class="remove-btn">删除</button>
+                <div class="col-action">
+                  <button @click="removeParam(index)" class="icon-btn">×</button>
                 </div>
               </div>
-              <div class="param-row add-param">
-                <button @click="addParam" class="add-param-btn">+ 添加参数</button>
+              <div class="table-row add-row">
+                <button @click="addParam" class="add-btn">+ 添加参数</button>
               </div>
             </div>
           </div>
 
-          <!-- 请求头 -->
-          <div class="header-section">
-            <h4>请求头</h4>
-            <div class="header-table">
-              <div class="header-header">
-                <div class="header-name">Header 名</div>
-                <div class="header-value">值</div>
-                <div class="header-action">操作</div>
+          <!-- Headers 标签页 -->
+          <div v-if="activeTabId === 'headers'" class="tab-pane">
+            <div class="param-table">
+              <div class="table-header">
+                <div class="col-enable"></div>
+                <div class="col-key">Header 名</div>
+                <div class="col-value">值</div>
+                <div class="col-action">操作</div>
               </div>
-              <div v-for="(header, key) in endpoint.headers" :key="key" class="header-row">
-                <div class="header-name">
-                  <input v-model="headerKeys[key]" type="text" placeholder="Header 名" @input="updateHeaderKey(key, $event)">
+              <div v-for="(header, index) in headerList" :key="index" class="table-row">
+                <div class="col-enable">
+                  <input type="checkbox" v-model="header.enabled" />
                 </div>
-                <div class="header-value">
-                  <input v-model="header" type="text" placeholder="Header 值">
+                <div class="col-key">
+                  <input v-model="header.key" type="text" placeholder="Header 名">
                 </div>
-                <div class="header-action">
-                  <button @click="removeHeader(key)" class="remove-btn">删除</button>
+                <div class="col-value">
+                  <input v-model="header.value" type="text" placeholder="Header 值">
+                </div>
+                <div class="col-action">
+                  <button @click="removeHeader(index)" class="icon-btn">×</button>
                 </div>
               </div>
-              <div class="header-row add-header">
-                <button @click="addHeader" class="add-header-btn">+ 添加 Header</button>
+              <div class="table-row add-row">
+                <button @click="addHeader" class="add-btn">+ 添加 Header</button>
               </div>
             </div>
           </div>
 
-          <!-- 请求体 -->
-          <div class="body-section">
-            <h4>请求体</h4>
-            <div class="body-content">
-              <div class="body-type">
-                <label>类型:</label>
-                <select v-model="endpoint.bodyType">
-                  <option value="json">JSON</option>
-                  <option value="form">Form</option>
-                  <option value="raw">Raw</option>
-                </select>
-              </div>
-              <div class="body-editor">
-                <textarea v-model="endpoint.body" placeholder="输入请求体"></textarea>
+          <!-- Body 标签页 -->
+          <div v-if="activeTabId === 'body'" class="tab-pane">
+            <div class="body-type-selector">
+              <label>
+                <input type="radio" v-model="endpoint.config.bodyType" value="none" />
+                none
+              </label>
+              <label>
+                <input type="radio" v-model="endpoint.config.bodyType" value="json" />
+                JSON
+              </label>
+              <label>
+                <input type="radio" v-model="endpoint.config.bodyType" value="form" />
+                x-www-form-urlencoded
+              </label>
+              <label>
+                <input type="radio" v-model="endpoint.config.bodyType" value="raw" />
+                raw
+              </label>
+            </div>
+
+            <div v-if="endpoint.config.bodyType !== 'none'" class="body-editor">
+              <textarea 
+                v-model="endpoint.config.body" 
+                placeholder="输入请求体"
+                class="body-textarea"
+              ></textarea>
+              <div v-if="endpoint.config.bodyType === 'json'" class="body-actions">
+                <button @click="formatJSON" class="action-btn">格式化</button>
+                <button @click="compactJSON" class="action-btn">压缩</button>
               </div>
             </div>
           </div>
 
-          <!-- 发送按钮 -->
-          <div class="action-section">
-            <button @click="sendRequest" class="send-btn">发送请求</button>
+          <!-- Authorization 标签页 -->
+          <div v-if="activeTabId === 'auth'" class="tab-pane">
+            <div class="auth-selector">
+              <select v-model="authType">
+                <option value="none">No Auth</option>
+                <option value="bearer">Bearer Token</option>
+                <option value="basic">Basic Auth</option>
+                <option value="apikey">API Key</option>
+              </select>
+            </div>
+
+            <div v-if="authType === 'bearer'" class="auth-form">
+              <div class="form-item">
+                <label>Token:</label>
+                <input v-model="authToken" type="text" placeholder="输入 Bearer Token">
+              </div>
+            </div>
+
+            <div v-if="authType === 'basic'" class="auth-form">
+              <div class="form-item">
+                <label>Username:</label>
+                <input v-model="authUsername" type="text" placeholder="用户名">
+              </div>
+              <div class="form-item">
+                <label>Password:</label>
+                <input v-model="authPassword" type="password" placeholder="密码">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧响应区 -->
+      <div class="response-panel" v-if="response">
+        <div class="response-header">
+          <div class="status-info">
+            <span class="status-code" :class="getStatusClass(response.status)">
+              {{ response.status }}
+            </span>
+            <span class="status-text">{{ response.statusText }}</span>
+          </div>
+          <div class="response-meta">
+            <span class="meta-item">{{ response.time }}ms</span>
+            <span class="meta-item">{{ formatSize(response.size) }}</span>
+            <button @click="copyResponse" class="icon-btn" title="复制响应">📋</button>
           </div>
         </div>
 
-        <!-- 响应标签页 -->
-        <div v-if="activeTabId === 'response'" class="response-tab">
-          <div v-if="loading" class="loading">发送中...</div>
-          <div v-else-if="response" class="response-content">
-            <div class="response-header">
-              <span class="status-code" :class="getStatusClass(response.status)">
-                {{ response.status }}
-              </span>
-              <span class="status-text">{{ response.statusText }}</span>
-            </div>
-            <div class="response-body">
-              <pre>{{ formattedResponse }}</pre>
-            </div>
-          </div>
-          <div v-else class="empty-response">
-            响应将显示在这里
+        <div class="response-tabs">
+          <div 
+            v-for="tab in responseTabs" 
+            :key="tab.id" 
+            class="response-tab" 
+            :class="{ active: activeResponseTab === tab.id }"
+            @click="activeResponseTab = tab.id"
+          >
+            {{ tab.name }}
           </div>
         </div>
+
+        <div class="response-content">
+          <div v-if="activeResponseTab === 'body'" class="response-body">
+            <pre>{{ formattedResponse }}</pre>
+          </div>
+          <div v-if="activeResponseTab === 'headers'" class="response-headers">
+            <div v-for="(value, key) in response.headers" :key="key" class="header-item">
+              <span class="header-key">{{ key }}:</span>
+              <span class="header-value">{{ value }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 空状态 -->
+      <div v-else class="response-empty">
+        <p>点击 "Send" 按钮发送请求</p>
       </div>
     </div>
   </div>
@@ -145,38 +231,60 @@ const props = defineProps({
 const emit = defineEmits(['send-request'])
 
 // 状态
-const activeTabId = ref('request')
+const activeTabId = ref('params')
+const activeResponseTab = ref('body')
 const loading = ref(false)
 const response = ref(null)
-const headerKeys = ref({})
 
 // 标签页配置
 const tabs = [
-  { id: 'request', name: '请求' },
-  { id: 'response', name: '响应' }
+  { id: 'params', name: 'Params' },
+  { id: 'headers', name: 'Headers' },
+  { id: 'body', name: 'Body' },
+  { id: 'auth', name: 'Authorization' }
 ]
+
+const responseTabs = [
+  { id: 'body', name: 'Body' },
+  { id: 'headers', name: 'Headers' }
+]
+
+// Auth 状态
+const authType = ref('none')
+const authToken = ref('')
+const authUsername = ref('')
+const authPassword = ref('')
+
+// Header 列表（转换为数组形式）
+const headerList = ref([])
+
+// 初始化 headerList
+watch(() => props.endpoint.config?.headers, (newHeaders) => {
+  if (newHeaders && typeof newHeaders === 'object') {
+    headerList.value = Object.entries(newHeaders).map(([key, value]) => ({
+      key,
+      value,
+      enabled: true
+    }))
+  } else {
+    headerList.value = []
+  }
+}, { deep: true, immediate: true })
 
 // 计算属性
 const formattedResponse = computed(() => {
   if (response.value?.data) {
     try {
-      return JSON.stringify(response.value.data, null, 2)
+      if (typeof response.value.data === 'object') {
+        return JSON.stringify(response.value.data, null, 2)
+      }
+      return response.value.data
     } catch (e) {
       return response.value.data
     }
   }
   return ''
 })
-
-// 生命周期
-watch(() => props.endpoint.headers, (newHeaders) => {
-  // 初始化 headerKeys
-  const keys = {}
-  for (const key in newHeaders) {
-    keys[key] = key
-  }
-  headerKeys.value = keys
-}, { deep: true, immediate: true })
 
 // 切换标签页
 function switchTab(tabId) {
@@ -185,45 +293,50 @@ function switchTab(tabId) {
 
 // 添加参数
 function addParam() {
-  if (!props.endpoint.params) {
-    props.endpoint.params = []
+  if (!props.endpoint.config.params) {
+    props.endpoint.config.params = []
   }
-  props.endpoint.params.push({ name: '', value: '' })
+  props.endpoint.config.params.push({ name: '', value: '', enabled: true })
 }
 
 // 删除参数
 function removeParam(index) {
-  if (props.endpoint.params) {
-    props.endpoint.params.splice(index, 1)
+  if (props.endpoint.config.params) {
+    props.endpoint.config.params.splice(index, 1)
   }
 }
 
 // 添加 Header
 function addHeader() {
-  if (!props.endpoint.headers) {
-    props.endpoint.headers = {}
-  }
-  const newKey = `header_${Date.now()}`
-  props.endpoint.headers[newKey] = ''
-  headerKeys.value[newKey] = ''
+  headerList.value.push({ key: '', value: '', enabled: true })
 }
 
 // 删除 Header
-function removeHeader(key) {
-  if (props.endpoint.headers) {
-    delete props.endpoint.headers[key]
-    delete headerKeys.value[key]
+function removeHeader(index) {
+  headerList.value.splice(index, 1)
+}
+
+// 格式化 JSON
+function formatJSON() {
+  try {
+    const body = props.endpoint.config.body
+    if (body) {
+      props.endpoint.config.body = JSON.stringify(JSON.parse(body), null, 2)
+    }
+  } catch (e) {
+    alert('JSON 格式错误')
   }
 }
 
-// 更新 Header 键
-function updateHeaderKey(oldKey, event) {
-  const newKey = event.target.value
-  if (newKey && oldKey !== newKey && props.endpoint.headers) {
-    props.endpoint.headers[newKey] = props.endpoint.headers[oldKey]
-    delete props.endpoint.headers[oldKey]
-    headerKeys.value[newKey] = newKey
-    delete headerKeys.value[oldKey]
+// 压缩 JSON
+function compactJSON() {
+  try {
+    const body = props.endpoint.config.body
+    if (body) {
+      props.endpoint.config.body = JSON.stringify(JSON.parse(body))
+    }
+  } catch (e) {
+    alert('JSON 格式错误')
   }
 }
 
@@ -233,39 +346,58 @@ async function sendRequest() {
   response.value = null
 
   try {
-    // 合并项目配置的 header
-    const headers = { ...props.projectConfig.headers, ...props.endpoint.headers }
+    // 构建 headers
+    const headers = { ...props.projectConfig.headers }
+    
+    // 添加 headerList 中的 headers
+    headerList.value.forEach(header => {
+      if (header.key && header.enabled) {
+        headers[header.key] = header.value
+      }
+    })
 
-    // 构建请求选项
+    // 处理 Authorization
+    if (authType.value === 'bearer' && authToken.value) {
+      headers['Authorization'] = `Bearer ${authToken.value}`
+    } else if (authType.value === 'basic' && authUsername.value) {
+      const credentials = btoa(`${authUsername.value}:${authPassword.value}`)
+      headers['Authorization'] = `Basic ${credentials}`
+    }
+
     const options = {
-      method: props.endpoint.method,
+      baseUrl: props.projectConfig.baseUrl || '',
       url: props.endpoint.url,
+      method: props.endpoint.method,
       headers: headers,
-      params: props.endpoint.params,
-      body: props.endpoint.body,
-      proxy: props.projectConfig.proxy
+      params: props.endpoint.config.params || [],
+      body: props.endpoint.config.body || '',
+      bodyType: props.endpoint.config.bodyType || 'none',
+      proxy: props.projectConfig.proxy || '',
+      timeout: props.endpoint.config.timeout || props.projectConfig.timeout || 30000
     }
 
     // 使用 electronAPI 发送请求
     if (window.electronAPI && window.electronAPI.sendApiRequest) {
       const result = await window.electronAPI.sendApiRequest(options)
       response.value = result
+      
+      // 切换到响应标签页
+      activeResponseTab.value = 'body'
     } else {
-      // 模拟响应
-      response.value = {
-        status: 200,
-        statusText: 'OK',
-        data: { message: '模拟响应', data: { test: 'data' } }
-      }
+      throw new Error('API 不可用')
     }
 
     // 触发发送请求事件
     emit('send-request', props.endpoint, props.projectConfig)
   } catch (error) {
     response.value = {
-      status: 500,
+      success: false,
+      status: 0,
       statusText: 'Error',
-      data: { error: error.message }
+      data: { error: error.message },
+      time: 0,
+      size: 0,
+      headers: {}
     }
   } finally {
     loading.value = false
@@ -285,6 +417,23 @@ function getStatusClass(status) {
   }
   return ''
 }
+
+// 格式化大小
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
+}
+
+// 复制响应
+function copyResponse() {
+  if (response.value?.data) {
+    const text = typeof response.value.data === 'object' 
+      ? JSON.stringify(response.value.data, null, 2)
+      : response.value.data
+    navigator.clipboard.writeText(text)
+  }
+}
 </script>
 
 <style scoped>
@@ -292,338 +441,502 @@ function getStatusClass(status) {
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  background: #fff;
 }
 
-/* 接口信息 */
-.endpoint-info {
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #ddd;
-}
-
-.endpoint-info h3 {
-  margin: 0 0 10px 0;
-  color: #333;
-}
-
-.info-row {
+/* 顶部请求栏 */
+.request-bar {
   display: flex;
-  align-items: center;
   gap: 10px;
+  padding: 15px 20px;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+  align-items: center;
 }
 
-.method-badge {
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 12px;
+.method-select {
+  padding: 8px 12px;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 100px;
+  transition: all 0.2s;
+}
+
+.method-select:hover {
+  border-color: #007aff;
+}
+
+.method-select.get {
+  color: #34c759;
+}
+
+.method-select.post {
+  color: #007aff;
+}
+
+.method-select.put {
+  color: #ff9500;
+}
+
+.method-select.delete {
+  color: #ff3b30;
+}
+
+.method-select.patch {
+  color: #5856d6;
+}
+
+.url-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  transition: all 0.2s;
+}
+
+.url-input:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.send-btn {
+  padding: 8px 24px;
+  background: #007aff;
   color: white;
-  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.method-badge.get {
-  background: #5cb85c;
+.send-btn:hover:not(:disabled) {
+  background: #0056cc;
 }
 
-.method-badge.post {
-  background: #337ab7;
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.method-badge.put {
-  background: #f0ad4e;
-}
-
-.method-badge.delete {
-  background: #d9534f;
-}
-
-.url {
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  color: #666;
-}
-
-/* 标签页 */
-.endpoint-tabs {
+/* 主内容区 */
+.main-content {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  gap: 1px;
+  background: #e5e5e5;
   overflow: hidden;
 }
 
-.tab-header {
+/* 请求面板 */
+.request-panel {
+  flex: 1;
   display: flex;
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
+  flex-direction: column;
+  background: white;
+  overflow: hidden;
+}
+
+/* 标签页头部 */
+.tabs-header {
+  display: flex;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
 }
 
 .tab-item {
   padding: 10px 20px;
   cursor: pointer;
-  border-right: 1px solid #ddd;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
 }
 
 .tab-item:hover {
-  background: #e0e0e0;
+  color: #007aff;
+  background: #f5f5f5;
 }
 
 .tab-item.active {
+  color: #007aff;
+  border-bottom-color: #007aff;
   background: white;
-  border-bottom: 2px solid #42b883;
-  font-weight: 500;
 }
 
-.tab-content {
+/* 标签内容 */
+.tabs-content {
   flex: 1;
   overflow: auto;
-  padding: 20px;
-}
-
-/* 请求标签页 */
-.request-tab {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.param-section,
-.header-section,
-.body-section {
-  background: #f9f9f9;
   padding: 15px;
-  border-radius: 4px;
 }
 
-.param-section h4,
-.header-section h4,
-.body-section h4 {
-  margin: 0 0 15px 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+.tab-pane {
+  height: 100%;
 }
 
 /* 参数表格 */
-.param-table,
-.header-table {
-  width: 100%;
-  border-collapse: collapse;
+.param-table {
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+  overflow: hidden;
 }
 
-.param-header,
-.header-header {
+.table-header {
   display: grid;
-  grid-template-columns: 1fr 1fr 100px;
+  grid-template-columns: 40px 1fr 1fr 50px;
   gap: 10px;
-  padding: 10px;
-  background: #e9e9e9;
-  font-weight: 500;
-  border-radius: 4px 4px 0 0;
+  padding: 10px 15px;
+  background: #fafafa;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+  border-bottom: 1px solid #e5e5e5;
 }
 
-.param-row,
-.header-row {
+.table-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 100px;
+  grid-template-columns: 40px 1fr 1fr 50px;
   gap: 10px;
-  padding: 10px;
-  border-bottom: 1px solid #e0e0e0;
+  padding: 8px 15px;
+  border-bottom: 1px solid #f0f0f0;
+  align-items: center;
 }
 
-.param-row:last-child,
-.header-row:last-child {
+.table-row:last-child {
   border-bottom: none;
 }
 
-.param-row input,
-.header-row input {
+.table-row input[type="text"] {
   width: 100%;
-  padding: 6px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
-.remove-btn {
-  background: #d9534f;
-  color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 3px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.remove-btn:hover {
-  background: #c9302c;
-}
-
-.add-param,
-.add-header {
-  justify-content: center;
-  padding: 15px;
-  background: #f0f0f0;
-  border-radius: 0 0 4px 4px;
-}
-
-.add-param-btn,
-.add-header-btn {
-  background: #42b883;
-  color: white;
-  border: none;
-  padding: 8px 16px;
+  padding: 6px 10px;
+  border: 1px solid #e5e5e5;
   border-radius: 4px;
-  cursor: pointer;
   font-size: 12px;
+  transition: all 0.2s;
 }
 
-.add-param-btn:hover,
-.add-header-btn:hover {
-  background: #35495e;
+.table-row input[type="text"]:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
 }
 
-/* 请求体 */
-.body-content {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+.table-row input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
 }
 
-.body-type {
+.col-enable {
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
 }
 
-.body-type label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #666;
+.add-row {
+  padding: 12px 15px;
+  background: #fafafa;
 }
 
-.body-type select {
-  padding: 6px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-size: 12px;
-}
-
-.body-editor textarea {
+.add-btn {
   width: 100%;
-  height: 200px;
+  padding: 8px;
+  background: transparent;
+  border: 1px dashed #d1d1d1;
+  border-radius: 4px;
+  color: #007aff;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-btn:hover {
+  background: #f0f8ff;
+  border-color: #007aff;
+}
+
+.icon-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: #999;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.icon-btn:hover {
+  background: #ff3b30;
+  color: white;
+}
+
+/* Body 编辑器 */
+.body-type-selector {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
   padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  resize: vertical;
+  background: #fafafa;
+  border-radius: 6px;
 }
 
-/* 操作区域 */
-.action-section {
-  margin-top: 10px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.send-btn {
-  background: #42b883;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.send-btn:hover {
-  background: #35495e;
-}
-
-/* 响应标签页 */
-.response-tab {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.loading {
+.body-type-selector label {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 100%;
+  gap: 6px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+}
+
+.body-type-selector input[type="radio"] {
+  cursor: pointer;
+}
+
+.body-editor {
+  position: relative;
+}
+
+.body-textarea {
+  width: 100%;
+  min-height: 300px;
+  padding: 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  transition: all 0.2s;
+}
+
+.body-textarea:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.body-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.action-btn {
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #d1d1d1;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #f5f5f5;
+  border-color: #007aff;
+  color: #007aff;
+}
+
+/* Authorization */
+.auth-selector {
+  margin-bottom: 15px;
+}
+
+.auth-selector select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-item label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
   color: #666;
 }
 
-.response-content {
+.form-item input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d1d1d1;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.form-item input:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+/* 响应面板 */
+.response-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  background: white;
+  border-left: 1px solid #e5e5e5;
+  overflow: hidden;
 }
 
 .response-header {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.status-info {
+  display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
-  background: #f0f0f0;
-  border-radius: 4px;
 }
 
 .status-code {
-  font-size: 14px;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
   color: white;
-  font-weight: 500;
 }
 
 .status-code.success {
-  background: #5cb85c;
+  background: #34c759;
 }
 
 .status-code.redirect {
-  background: #f0ad4e;
+  background: #ff9500;
 }
 
 .status-code.error {
-  background: #d9534f;
+  background: #ff3b30;
 }
 
 .status-code.server-error {
-  background: #777;
+  background: #8e8e93;
 }
 
 .status-text {
-  font-size: 14px;
+  font-size: 13px;
   color: #666;
 }
 
-.response-body {
+.response-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.meta-item {
+  font-size: 12px;
+  color: #999;
+  font-family: 'SF Mono', 'Courier New', monospace;
+}
+
+.response-tabs {
+  display: flex;
+  background: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.response-tab {
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.response-tab:hover {
+  color: #007aff;
+}
+
+.response-tab.active {
+  color: #007aff;
+  border-bottom-color: #007aff;
+  background: white;
+}
+
+.response-content {
   flex: 1;
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 4px;
   overflow: auto;
+  padding: 15px;
 }
 
 .response-body pre {
   margin: 0;
-  font-family: 'Courier New', monospace;
+  font-family: 'SF Mono', 'Courier New', monospace;
   font-size: 12px;
+  line-height: 1.5;
   white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #333;
 }
 
-.empty-response {
+.response-headers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header-item {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  background: #fafafa;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.header-key {
+  font-weight: 600;
+  color: #007aff;
+  font-family: 'SF Mono', 'Courier New', monospace;
+}
+
+.header-value {
+  color: #666;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  word-break: break-all;
+}
+
+/* 空状态 */
+.response-empty {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
   color: #999;
+  font-size: 13px;
 }
 </style>

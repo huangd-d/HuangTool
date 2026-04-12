@@ -2,66 +2,25 @@
   <div class="api-view">
     <div class="api-container">
       <!-- 左侧导航 -->
-      <div class="api-sidebar">
-        <!-- 项目管理 -->
-        <div class="sidebar-section">
-          <div class="section-header">
-            <h3>项目</h3>
-            <button @click="showProjectDialog = true" class="add-btn">+</button>
-          </div>
-          <ul class="project-list">
-            <li v-for="project in projects" :key="project.id" 
-                :class="{ active: selectedProject?.id === project.id }"
-                @click="selectProject(project)">
-              {{ project.name }}
-              <div class="project-actions">
-                <button @click.stop="editProject(project)" class="action-btn edit">✏️</button>
-                <button @click.stop="deleteProject(project)" class="action-btn delete">🗑️</button>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 分类管理 -->
-        <div class="sidebar-section" v-if="selectedProject">
-          <div class="section-header">
-            <h3>分类</h3>
-            <button @click="showCategoryDialog = true" class="add-btn">+</button>
-          </div>
-          <ul class="category-list">
-            <li v-for="category in categories" :key="category.id"
-                :class="{ active: selectedCategory?.id === category.id }"
-                @click="selectCategory(category)">
-              {{ category.name }}
-              <div class="category-actions">
-                <button @click.stop="editCategory(category)" class="action-btn edit">✏️</button>
-                <button @click.stop="deleteCategory(category)" class="action-btn delete">🗑️</button>
-              </div>
-            </li>
-          </ul>
-        </div>
-
-        <!-- 接口管理 -->
-        <div class="sidebar-section" v-if="selectedCategory">
-          <div class="section-header">
-            <h3>接口</h3>
-            <button @click="showEndpointDialog = true" class="add-btn">+</button>
-          </div>
-          <ul class="endpoint-list">
-            <li v-for="endpoint in endpoints" :key="endpoint.id"
-                @click="openEndpointTab(endpoint)">
-              {{ endpoint.name }}
-              <span class="endpoint-method" :class="endpoint.method.toLowerCase()">
-                {{ endpoint.method }}
-              </span>
-              <div class="endpoint-actions">
-                <button @click.stop="editEndpoint(endpoint)" class="action-btn edit">✏️</button>
-                <button @click.stop="deleteEndpoint(endpoint)" class="action-btn delete">🗑️</button>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
+      <ApiSidebar
+        :projects="projects"
+        :categories="categories"
+        :endpoints="endpoints"
+        :selected-project="selectedProject"
+        :selected-category="selectedCategory"
+        @add-project="showProjectDialog = true"
+        @edit-project="editProject"
+        @delete-project="deleteProject"
+        @select-project="selectProject"
+        @add-category="showCategoryDialog = true"
+        @edit-category="editCategory"
+        @delete-category="deleteCategory"
+        @select-category="selectCategory"
+        @add-endpoint="addEndpoint"
+        @edit-endpoint="editEndpoint"
+        @delete-endpoint="deleteEndpoint"
+        @open-endpoint-tab="openEndpointTab"
+      />
 
       <!-- 右侧内容 -->
       <div class="api-content">
@@ -69,12 +28,20 @@
         <div class="config-panel" v-if="selectedProject">
           <h3>通用配置</h3>
           <div class="config-item">
-            <label>代理地址:</label>
-            <input v-model="selectedProject.config.proxy" type="text" placeholder="输入代理地址">
+            <label>基础 URL:</label>
+            <input v-model="selectedProject.config.baseUrl" type="text" placeholder="https://api.example.com">
           </div>
           <div class="config-item">
-            <label>共用 Header:</label>
-            <textarea v-model="configHeaders" placeholder="输入 JSON 格式的 Header"></textarea>
+            <label>代理地址:</label>
+            <input v-model="selectedProject.config.proxy" type="text" placeholder="http://proxy.example.com:8080">
+          </div>
+          <div class="config-item">
+            <label>超时时间 (ms):</label>
+            <input v-model.number="selectedProject.config.timeout" type="number" placeholder="30000">
+          </div>
+          <div class="config-item">
+            <label>共用 Header (JSON):</label>
+            <textarea v-model="configHeaders" placeholder='{"Authorization": "Bearer token"}'></textarea>
           </div>
           <button @click="saveProjectConfig" class="save-btn">保存配置</button>
         </div>
@@ -111,93 +78,34 @@
     </div>
 
     <!-- 项目对话框 -->
-    <div class="dialog-overlay" v-if="showProjectDialog">
-      <div class="dialog">
-        <h3>{{ editingProject ? '编辑项目' : '创建项目' }}</h3>
-        <div class="dialog-content">
-          <div class="form-item">
-            <label>项目名称:</label>
-            <input v-model="projectForm.name" type="text" placeholder="输入项目名称">
-          </div>
-          <div class="form-item">
-            <label>项目描述:</label>
-            <textarea v-model="projectForm.description" placeholder="输入项目描述"></textarea>
-          </div>
-        </div>
-        <div class="dialog-actions">
-          <button @click="showProjectDialog = false">取消</button>
-          <button @click="saveProject" class="primary">保存</button>
-        </div>
-      </div>
-    </div>
+    <ProjectDialog 
+      v-model="showProjectDialog" 
+      :project="editingProject"
+      @save="handleSaveProject"
+    />
 
     <!-- 分类对话框 -->
-    <div class="dialog-overlay" v-if="showCategoryDialog">
-      <div class="dialog">
-        <h3>{{ editingCategory ? '编辑分类' : '创建分类' }}</h3>
-        <div class="dialog-content">
-          <div class="form-item">
-            <label>分类名称:</label>
-            <input v-model="categoryForm.name" type="text" placeholder="输入分类名称">
-          </div>
-          <div class="form-item">
-            <label>分类描述:</label>
-            <textarea v-model="categoryForm.description" placeholder="输入分类描述"></textarea>
-          </div>
-        </div>
-        <div class="dialog-actions">
-          <button @click="showCategoryDialog = false">取消</button>
-          <button @click="saveCategory" class="primary">保存</button>
-        </div>
-      </div>
-    </div>
+    <CategoryDialog 
+      v-model="showCategoryDialog" 
+      :category="editingCategory"
+      @save="handleSaveCategory"
+    />
 
     <!-- 接口对话框 -->
-    <div class="dialog-overlay" v-if="showEndpointDialog">
-      <div class="dialog">
-        <h3>{{ editingEndpoint ? '编辑接口' : '创建接口' }}</h3>
-        <div class="dialog-content">
-          <div class="form-item">
-            <label>接口名称:</label>
-            <input v-model="endpointForm.name" type="text" placeholder="输入接口名称">
-          </div>
-          <div class="form-item">
-            <label>接口 URL:</label>
-            <input v-model="endpointForm.url" type="text" placeholder="输入接口 URL">
-          </div>
-          <div class="form-item">
-            <label>请求方法:</label>
-            <select v-model="endpointForm.method">
-              <option value="GET">GET</option>
-              <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-              <option value="DELETE">DELETE</option>
-            </select>
-          </div>
-          <div class="form-item">
-            <label>请求体类型:</label>
-            <select v-model="endpointForm.bodyType">
-              <option value="json">JSON</option>
-              <option value="form">Form</option>
-              <option value="raw">Raw</option>
-            </select>
-          </div>
-          <div class="form-item">
-            <label>请求体:</label>
-            <textarea v-model="endpointForm.body" placeholder="输入请求体"></textarea>
-          </div>
-        </div>
-        <div class="dialog-actions">
-          <button @click="showEndpointDialog = false">取消</button>
-          <button @click="saveEndpoint" class="primary">保存</button>
-        </div>
-      </div>
-    </div>
+    <EndpointDialog 
+      v-model="showEndpointDialog" 
+      :endpoint="editingEndpoint"
+      @save="handleSaveEndpoint"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import ApiSidebar from '../components/ApiSidebar.vue'
+import ProjectDialog from '../components/dialogs/ProjectDialog.vue'
+import CategoryDialog from '../components/dialogs/CategoryDialog.vue'
+import EndpointDialog from '../components/dialogs/EndpointDialog.vue'
 
 // 状态管理
 const projects = ref([])
@@ -213,17 +121,12 @@ const showProjectDialog = ref(false)
 const showCategoryDialog = ref(false)
 const showEndpointDialog = ref(false)
 
-// 表单数据
-const projectForm = ref({ name: '', description: '' })
-const categoryForm = ref({ name: '', description: '' })
-const endpointForm = ref({ name: '', url: '', method: 'GET', bodyType: 'json', body: '' })
-
 // 编辑状态
 const editingProject = ref(null)
 const editingCategory = ref(null)
 const editingEndpoint = ref(null)
 
-// 计算属性
+// 计算属性 - 配置 Headers 显示
 const configHeaders = computed({
   get: () => {
     if (selectedProject.value?.config?.headers) {
@@ -252,6 +155,7 @@ async function loadProjects() {
   if (window.electronAPI && window.electronAPI.getApiProjects) {
     try {
       projects.value = await window.electronAPI.getApiProjects()
+      console.log('Loaded projects:', projects.value)
     } catch (error) {
       console.error('Error loading projects:', error)
     }
@@ -260,68 +164,46 @@ async function loadProjects() {
 
 // 选择项目
 async function selectProject(project) {
+  console.log('Selecting project:', project)
   selectedProject.value = project
   selectedCategory.value = null
   endpoints.value = []
-  await loadCategories(project.name)
-}
-
-// 加载分类
-async function loadCategories(projectName) {
-  if (window.electronAPI && window.electronAPI.getApiCategories) {
-    try {
-      categories.value = await window.electronAPI.getApiCategories(projectName)
-    } catch (error) {
-      console.error('Error loading categories:', error)
-    }
-  }
+  
+  // 直接使用项目数据中的分类
+  categories.value = project.categories || []
+  console.log('Categories:', categories.value)
 }
 
 // 选择分类
 async function selectCategory(category) {
+  console.log('Selecting category:', category)
   selectedCategory.value = category
-  await loadEndpoints(selectedProject.value.name, category.id)
-}
-
-// 加载接口
-async function loadEndpoints(projectName, categoryId) {
-  if (window.electronAPI && window.electronAPI.getApiEndpoints) {
-    try {
-      endpoints.value = await window.electronAPI.getApiEndpoints(projectName, categoryId)
-    } catch (error) {
-      console.error('Error loading endpoints:', error)
-    }
-  }
+  
+  // 直接使用分类数据中的接口
+  endpoints.value = category.endpoints || []
+  console.log('Endpoints:', endpoints.value)
 }
 
 // 打开项目对话框
 function editProject(project) {
   editingProject.value = project
-  projectForm.value = { ...project }
   showProjectDialog.value = true
 }
 
-// 保存项目
-async function saveProject() {
-  if (!projectForm.value.name) {
-    alert('请输入项目名称')
-    return
-  }
-
+// 处理保存项目
+async function handleSaveProject(projectData) {
   try {
     if (editingProject.value) {
       // 更新项目
-      await window.electronAPI.updateApiProject(projectForm.value)
+      await window.electronAPI.updateApiProject(projectData)
     } else {
       // 创建项目
-      await window.electronAPI.createApiProject(projectForm.value)
+      await window.electronAPI.createApiProject(projectData)
     }
     await loadProjects()
-    showProjectDialog.value = false
-    resetProjectForm()
   } catch (error) {
     console.error('Error saving project:', error)
-    alert('保存项目失败')
+    alert('保存项目失败: ' + error.message)
   }
 }
 
@@ -348,31 +230,29 @@ async function deleteProject(project) {
 // 打开分类对话框
 function editCategory(category) {
   editingCategory.value = category
-  categoryForm.value = { ...category }
   showCategoryDialog.value = true
 }
 
-// 保存分类
-async function saveCategory() {
-  if (!categoryForm.value.name) {
-    alert('请输入分类名称')
-    return
-  }
-
+// 处理保存分类
+async function handleSaveCategory(categoryData) {
   try {
     if (editingCategory.value) {
       // 更新分类
-      await window.electronAPI.updateApiCategory(selectedProject.value.name, categoryForm.value)
+      await window.electronAPI.updateApiCategory(selectedProject.value.name, { ...categoryData, id: editingCategory.value.id })
     } else {
       // 创建分类
-      await window.electronAPI.createApiCategory(selectedProject.value.name, categoryForm.value)
+      await window.electronAPI.createApiCategory(selectedProject.value.name, categoryData)
     }
-    await loadCategories(selectedProject.value.name)
-    showCategoryDialog.value = false
-    resetCategoryForm()
+    // 重新加载项目以获取最新数据
+    await loadProjects()
+    // 重新选择当前项目以更新分类列表
+    const updatedProject = projects.value.find(p => p.id === selectedProject.value.id)
+    if (updatedProject) {
+      await selectProject(updatedProject)
+    }
   } catch (error) {
     console.error('Error saving category:', error)
-    alert('保存分类失败')
+    alert('保存分类失败: ' + error.message)
   }
 }
 
@@ -381,46 +261,66 @@ async function deleteCategory(category) {
   if (confirm(`确定要删除分类 ${category.name} 吗？`)) {
     try {
       await window.electronAPI.deleteApiCategory(selectedProject.value.name, category.id)
-      await loadCategories(selectedProject.value.name)
-      if (selectedCategory.value?.id === category.id) {
-        selectedCategory.value = null
-        endpoints.value = []
+      // 重新加载项目以获取最新数据
+      await loadProjects()
+      // 重新选择当前项目以更新分类列表
+      const updatedProject = projects.value.find(p => p.id === selectedProject.value.id)
+      if (updatedProject) {
+        await selectProject(updatedProject)
       }
     } catch (error) {
       console.error('Error deleting category:', error)
-      alert('删除分类失败')
+      alert('删除分类失败: ' + error.message)
     }
   }
 }
 
 // 打开接口对话框
-function editEndpoint(endpoint) {
-  editingEndpoint.value = endpoint
-  endpointForm.value = { ...endpoint }
+function addEndpoint() {
+  console.log('Adding new endpoint')
+  editingEndpoint.value = null
   showEndpointDialog.value = true
 }
 
-// 保存接口
-async function saveEndpoint() {
-  if (!endpointForm.value.name || !endpointForm.value.url) {
-    alert('请输入接口名称和 URL')
-    return
-  }
+// 打开接口对话框
+function editEndpoint(endpoint) {
+  console.log('Editing endpoint:', endpoint)
+  editingEndpoint.value = endpoint
+  showEndpointDialog.value = true
+}
 
+// 处理保存接口
+async function handleSaveEndpoint(endpointData) {
   try {
     if (editingEndpoint.value) {
       // 更新接口
-      await window.electronAPI.updateApiEndpoint(selectedProject.value.name, selectedCategory.value.id, endpointForm.value)
+      await window.electronAPI.updateApiEndpoint(
+        selectedProject.value.name, 
+        selectedCategory.value.id, 
+        { ...endpointData, id: editingEndpoint.value.id }
+      )
     } else {
       // 创建接口
-      await window.electronAPI.createApiEndpoint(selectedProject.value.name, selectedCategory.value.id, endpointForm.value)
+      await window.electronAPI.createApiEndpoint(
+        selectedProject.value.name, 
+        selectedCategory.value.id, 
+        endpointData
+      )
     }
-    await loadEndpoints(selectedProject.value.name, selectedCategory.value.id)
-    showEndpointDialog.value = false
-    resetEndpointForm()
+    // 重新加载项目以获取最新数据
+    await loadProjects()
+    // 重新选择当前项目和分类以更新接口列表
+    const updatedProject = projects.value.find(p => p.id === selectedProject.value.id)
+    if (updatedProject) {
+      await selectProject(updatedProject)
+      const updatedCategory = updatedProject.categories.find(c => c.id === selectedCategory.value.id)
+      if (updatedCategory) {
+        await selectCategory(updatedCategory)
+      }
+    }
   } catch (error) {
     console.error('Error saving endpoint:', error)
-    alert('保存接口失败')
+    alert('保存接口失败: ' + error.message)
   }
 }
 
@@ -429,15 +329,25 @@ async function deleteEndpoint(endpoint) {
   if (confirm(`确定要删除接口 ${endpoint.name} 吗？`)) {
     try {
       await window.electronAPI.deleteApiEndpoint(selectedProject.value.name, selectedCategory.value.id, endpoint.id)
-      await loadEndpoints(selectedProject.value.name, selectedCategory.value.id)
+      // 重新加载项目以获取最新数据
+      await loadProjects()
+      // 重新选择当前项目和分类以更新接口列表
+      const updatedProject = projects.value.find(p => p.id === selectedProject.value.id)
+      if (updatedProject) {
+        await selectProject(updatedProject)
+        const updatedCategory = updatedProject.categories.find(c => c.id === selectedCategory.value.id)
+        if (updatedCategory) {
+          await selectCategory(updatedCategory)
+        }
+      }
       // 关闭相关的 tab
       tabs.value = tabs.value.filter(tab => tab.endpoint.id !== endpoint.id)
-      if (activeTabId.value === endpoint.id) {
+      if (activeTabId.value && !tabs.value.find(tab => tab.id === activeTabId.value)) {
         activeTabId.value = tabs.value.length > 0 ? tabs.value[0].id : null
       }
     } catch (error) {
       console.error('Error deleting endpoint:', error)
-      alert('删除接口失败')
+      alert('删除接口失败: ' + error.message)
     }
   }
 }
@@ -446,17 +356,46 @@ async function deleteEndpoint(endpoint) {
 async function saveProjectConfig() {
   if (selectedProject.value) {
     try {
-      await window.electronAPI.updateApiProject(selectedProject.value)
+      // 确保 config 结构完整
+      const projectData = {
+        ...selectedProject.value,
+        config: {
+          baseUrl: selectedProject.value.config?.baseUrl || '',
+          proxy: selectedProject.value.config?.proxy || '',
+          headers: selectedProject.value.config?.headers || {},
+          timeout: selectedProject.value.config?.timeout || 30000
+        }
+      }
+      
+      await window.electronAPI.updateApiProject(projectData)
       alert('配置已保存')
+      // 重新加载项目列表
+      await loadProjects()
     } catch (error) {
       console.error('Error saving project config:', error)
-      alert('保存配置失败')
+      alert('保存配置失败: ' + error.message)
     }
   }
 }
 
 // 打开接口 Tab
 function openEndpointTab(endpoint) {
+  console.log('Opening endpoint tab:', endpoint)
+  
+  // 确保 endpoint 有完整的 config 结构
+  const endpointData = {
+    ...endpoint,
+    config: {
+      headers: endpoint.config?.headers || {},
+      params: endpoint.config?.params || [],
+      bodyType: endpoint.config?.bodyType || 'none',
+      body: endpoint.config?.body || '',
+      timeout: endpoint.config?.timeout || 30000,
+      followRedirect: endpoint.config?.followRedirect !== false,
+      ...endpoint.config
+    }
+  }
+  
   // 检查是否已存在该接口的 tab
   const existingTab = tabs.value.find(tab => tab.endpoint.id === endpoint.id)
   if (existingTab) {
@@ -465,7 +404,7 @@ function openEndpointTab(endpoint) {
     const newTab = {
       id: Date.now().toString(),
       name: endpoint.name,
-      endpoint: endpoint
+      endpoint: endpointData
     }
     tabs.value.push(newTab)
     activeTabId.value = newTab.id
@@ -486,25 +425,37 @@ function closeTab(tabId) {
 }
 
 // 处理请求发送
-function handleSendRequest(endpoint, config) {
-  // 这里可以添加请求发送的逻辑
-  console.log('Send request:', endpoint, config)
-}
+async function handleSendRequest(endpoint, projectConfig) {
+  try {
+    // 合并配置
+    const headers = {
+      ...(projectConfig?.headers || {}),
+      ...(endpoint.config?.headers || {})
+    }
 
-// 重置表单
-function resetProjectForm() {
-  projectForm.value = { name: '', description: '' }
-  editingProject.value = null
-}
+    const options = {
+      baseUrl: projectConfig?.baseUrl || '',
+      url: endpoint.url,
+      method: endpoint.method,
+      headers: headers,
+      params: endpoint.config?.params || [],
+      body: endpoint.config?.body || '',
+      bodyType: endpoint.config?.bodyType || 'none',
+      proxy: endpoint.config?.proxy || projectConfig?.proxy || '',
+      timeout: endpoint.config?.timeout || projectConfig?.timeout || 30000
+    }
 
-function resetCategoryForm() {
-  categoryForm.value = { name: '', description: '' }
-  editingCategory.value = null
-}
-
-function resetEndpointForm() {
-  endpointForm.value = { name: '', url: '', method: 'GET', bodyType: 'json', body: '' }
-  editingEndpoint.value = null
+    // 使用 electronAPI 发送请求
+    if (window.electronAPI && window.electronAPI.sendApiRequest) {
+      const result = await window.electronAPI.sendApiRequest(options)
+      return result
+    } else {
+      throw new Error('API 不可用')
+    }
+  } catch (error) {
+    console.error('Request error:', error)
+    throw error
+  }
 }
 </script>
 
@@ -519,152 +470,6 @@ function resetEndpointForm() {
   display: flex;
   flex: 1;
   overflow: hidden;
-}
-
-/* 左侧导航 */
-.api-sidebar {
-  width: 300px;
-  background: #f5f5f5;
-  border-right: 1px solid #ddd;
-  overflow-y: auto;
-  padding: 15px;
-}
-
-.sidebar-section {
-  margin-bottom: 20px;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.section-header h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
-}
-
-.add-btn {
-  width: 24px;
-  height: 24px;
-  border: none;
-  border-radius: 50%;
-  background: #42b883;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.add-btn:hover {
-  background: #35495e;
-}
-
-/* 项目列表 */
-.project-list,
-.category-list,
-.endpoint-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.project-list li,
-.category-list li,
-.endpoint-list li {
-  padding: 8px 12px;
-  margin-bottom: 4px;
-  border-radius: 4px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: background-color 0.2s;
-}
-
-.project-list li:hover,
-.category-list li:hover,
-.endpoint-list li:hover {
-  background: #e0e0e0;
-}
-
-.project-list li.active,
-.category-list li.active {
-  background: #42b883;
-  color: white;
-}
-
-/* 操作按钮 */
-.project-actions,
-.category-actions,
-.endpoint-actions {
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.project-list li:hover .project-actions,
-.category-list li:hover .category-actions,
-.endpoint-list li:hover .endpoint-actions {
-  opacity: 1;
-}
-
-.action-btn {
-  width: 20px;
-  height: 20px;
-  border: none;
-  border-radius: 3px;
-  background: transparent;
-  cursor: pointer;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.action-btn.edit:hover {
-  background: #f0ad4e;
-  color: white;
-}
-
-.action-btn.delete:hover {
-  background: #d9534f;
-  color: white;
-}
-
-/* 接口方法标签 */
-.endpoint-method {
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 10px;
-  margin-right: 8px;
-}
-
-.endpoint-method.get {
-  background: #5cb85c;
-  color: white;
-}
-
-.endpoint-method.post {
-  background: #337ab7;
-  color: white;
-}
-
-.endpoint-method.put {
-  background: #f0ad4e;
-  color: white;
-}
-
-.endpoint-method.delete {
-  background: #d9534f;
-  color: white;
 }
 
 /* 右侧内容 */
@@ -811,90 +616,5 @@ function resetEndpointForm() {
 
 .empty-state h3 {
   margin-bottom: 10px;
-}
-
-/* 对话框 */
-.dialog-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.dialog {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  width: 400px;
-  max-width: 90%;
-}
-
-.dialog h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: #333;
-}
-
-.dialog-content {
-  margin-bottom: 20px;
-}
-
-.form-item {
-  margin-bottom: 15px;
-}
-
-.form-item label {
-  display: block;
-  margin-bottom: 5px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #666;
-}
-
-.form-item input,
-.form-item select,
-.form-item textarea {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-sizing: border-box;
-  font-size: 12px;
-}
-
-.form-item textarea {
-  height: 100px;
-  resize: vertical;
-}
-
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.dialog-actions button {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.dialog-actions button.primary {
-  background: #42b883;
-  color: white;
-  border-color: #42b883;
-}
-
-.dialog-actions button.primary:hover {
-  background: #35495e;
-  border-color: #35495e;
 }
 </style>

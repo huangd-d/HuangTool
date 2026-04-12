@@ -3,7 +3,10 @@ const { contextBridge, ipcRenderer } = require('electron')
 contextBridge.exposeInMainWorld('electronAPI', {
   getVersions: () => process.versions,
   getDocsDirectories: () => ipcRenderer.invoke('get-docs-directories'),
+  // API 请求
   sendApiRequest: (options) => ipcRenderer.invoke('send-api-request', options),
+  getFullEndpoint: (projectName, categoryId, endpointId) => 
+    ipcRenderer.invoke('get-full-endpoint', projectName, categoryId, endpointId),
   // API 项目管理
   getApiProjects: () => ipcRenderer.invoke('get-api-projects'),
   createApiProject: (project) => ipcRenderer.invoke('create-api-project', project),

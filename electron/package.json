@@ -10,14 +10,17 @@
     "doc": "docs"
   },
   "scripts": {
-    "start": "set NODE_ENV=development && electron .",
+    "start": "cross-env NODE_ENV=development electron .",
     "build": "npm run build:web && electron-builder",
     "build:web": "cd ../web && npm run build && cd ../electron"
   },
   "dependencies": {
-    "electron": "^41.1.1"
+    "electron": "^41.1.1",
+    "node-fetch": "^3.3.2",
+    "proxy-agent": "^6.3.1"
   },
   "devDependencies": {
+    "cross-env": "^10.1.0",
     "electron-builder": "^26.8.1",
     "electron-reloader": "^1.2.3"
   },

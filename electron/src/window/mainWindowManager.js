@@ -21,10 +21,8 @@ export function createWindow() {
   // 加载前端应用（壳视图：只有头部栏）
   mainWindow.loadURL('http://localhost:5173/?shell=true');
 
-  // 自动打开开发者工具（开发环境）
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.webContents.openDevTools();
-  }
+  // 强制打开开发者工具（开发环境）
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
 
   return mainWindow
 }

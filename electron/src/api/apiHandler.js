@@ -1,13 +1,29 @@
 import fs from 'fs'
 import path from 'path'
 import { app, ipcMain } from 'electron'
+import { fileURLToPath } from 'url'
+import { sendRequest, mergeConfigs } from './requestHandler.js'
+
+// 模拟 __dirname 在 ES6 模块中
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// 获取 swagger 目录路径
+function getSwaggerPath() {
+  return path.join(__dirname, '../../swagger')
+}
 
 // API 项目管理
 export function registerApiHandlers() {
   // API 项目管理
   ipcMain.handle('get-api-projects', async () => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     try {
+      // 确保目录存在
+      if (!fs.existsSync(swaggerPath)) {
+        fs.mkdirSync(swaggerPath, { recursive: true })
+      }
+      
       const files = await fs.promises.readdir(swaggerPath)
       const projects = []
       for (const file of files) {
@@ -25,7 +41,13 @@ export function registerApiHandlers() {
   });
 
   ipcMain.handle('create-api-project', async (event, project) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
+    
+    // 确保目录存在
+    if (!fs.existsSync(swaggerPath)) {
+      fs.mkdirSync(swaggerPath, { recursive: true })
+    }
+    
     const filePath = path.join(swaggerPath, `${project.name}.json`)
     
     try {
@@ -33,9 +55,11 @@ export function registerApiHandlers() {
         id: Date.now().toString(),
         name: project.name,
         description: project.description || '',
-        config: project.config || {
-          proxy: '',
-          headers: {}
+        config: {
+          baseUrl: project.config?.baseUrl || '',
+          proxy: project.config?.proxy || '',
+          headers: project.config?.headers || {},
+          timeout: project.config?.timeout || 30000
         },
         categories: []
       }
@@ -48,12 +72,23 @@ export function registerApiHandlers() {
   });
 
   ipcMain.handle('update-api-project', async (event, project) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${project.name}.json`)
     
     try {
-      await fs.promises.writeFile(filePath, JSON.stringify(project, null, 2))
-      return project
+      // 确保 config 结构完整
+      const projectData = {
+        ...project,
+        config: {
+          baseUrl: project.config?.baseUrl || '',
+          proxy: project.config?.proxy || '',
+          headers: project.config?.headers || {},
+          timeout: project.config?.timeout || 30000,
+          ...project.config
+        }
+      }
+      await fs.promises.writeFile(filePath, JSON.stringify(projectData, null, 2))
+      return projectData
     } catch (error) {
       console.error('Error updating API project:', error)
       throw error
@@ -61,7 +96,7 @@ export function registerApiHandlers() {
   });
 
   ipcMain.handle('delete-api-project', async (event, projectName) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${projectName}.json`)
     
     try {
@@ -75,7 +110,7 @@ export function registerApiHandlers() {
 
   // API 分类管理
   ipcMain.handle('get-api-categories', async (event, projectName) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${projectName}.json`)
     
     try {
@@ -89,7 +124,7 @@ export function registerApiHandlers() {
   });
 
   ipcMain.handle('create-api-category', async (event, projectName, category) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${projectName}.json`)
     
     try {
@@ -113,7 +148,7 @@ export function registerApiHandlers() {
   });
 
   ipcMain.handle('update-api-category', async (event, projectName, category) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${projectName}.json`)
     
     try {
@@ -134,7 +169,7 @@ export function registerApiHandlers() {
   });
 
   ipcMain.handle('delete-api-category', async (event, projectName, categoryId) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${projectName}.json`)
     
     try {
@@ -152,7 +187,7 @@ export function registerApiHandlers() {
 
   // API 接口管理
   ipcMain.handle('get-api-endpoints', async (event, projectName, categoryId) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${projectName}.json`)
     
     try {
@@ -167,7 +202,7 @@ export function registerApiHandlers() {
   });
 
   ipcMain.handle('create-api-endpoint', async (event, projectName, categoryId, endpoint) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${projectName}.json`)
     
     try {
@@ -181,10 +216,17 @@ export function registerApiHandlers() {
           name: endpoint.name,
           url: endpoint.url,
           method: endpoint.method || 'GET',
-          headers: endpoint.headers || {},
-          params: endpoint.params || [],
-          body: endpoint.body || '',
-          bodyType: endpoint.bodyType || 'json'
+          description: endpoint.description || '',
+          config: {
+            headers: endpoint.config?.headers || {},
+            params: endpoint.config?.params || [],
+            bodyType: endpoint.config?.bodyType || 'none',
+            body: endpoint.config?.body || '',
+            timeout: endpoint.config?.timeout || 30000,
+            followRedirect: endpoint.config?.followRedirect !== false
+          },
+          tests: [],
+          examples: []
         }
         
         category.endpoints.push(newEndpoint)
@@ -199,7 +241,7 @@ export function registerApiHandlers() {
   });
 
   ipcMain.handle('update-api-endpoint', async (event, projectName, categoryId, endpoint) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${projectName}.json`)
     
     try {
@@ -223,7 +265,7 @@ export function registerApiHandlers() {
   });
 
   ipcMain.handle('delete-api-endpoint', async (event, projectName, categoryId, endpointId) => {
-    const swaggerPath = path.join(app.getAppPath(), '../swagger')
+    const swaggerPath = getSwaggerPath()
     const filePath = path.join(swaggerPath, `${projectName}.json`)
     
     try {
@@ -245,44 +287,50 @@ export function registerApiHandlers() {
 
   // API 请求发送
   ipcMain.handle('send-api-request', async (event, options) => {
-    const { method, url, body, token, proxy, headers } = options
-    
     try {
-      // 构建请求选项
-      const requestOptions = {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers
-        }
-      }
-      
-      // 添加 token
-      if (token) {
-        requestOptions.headers['Authorization'] = `Bearer ${token}`
-      }
-      
-      // 添加请求体
-      if (body) {
-        requestOptions.body = body
-      }
-      
-      // 发送请求
-      const response = await fetch(url, requestOptions)
-      
-      // 解析响应
-      const data = await response.json()
-      
-      return {
-        status: response.status,
-        statusText: response.statusText,
-        data
-      }
+      const result = await sendRequest(options)
+      return result
     } catch (error) {
       console.error('API request error:', error)
       return {
-        error: error.message
+        success: false,
+        error: error.message || '请求失败',
+        time: 0
       }
+    }
+  });
+
+  // 获取完整接口信息（含项目配置合并）
+  ipcMain.handle('get-full-endpoint', async (event, projectName, categoryId, endpointId) => {
+    const swaggerPath = getSwaggerPath()
+    const filePath = path.join(swaggerPath, `${projectName}.json`)
+    
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf8')
+      const project = JSON.parse(content)
+      
+      const category = project.categories.find(c => c.id === categoryId)
+      if (!category) {
+        throw new Error('Category not found')
+      }
+      
+      const endpoint = category.endpoints.find(e => e.id === endpointId)
+      if (!endpoint) {
+        throw new Error('Endpoint not found')
+      }
+      
+      // 合并配置
+      const mergedConfig = mergeConfigs(project.config, endpoint.config)
+      
+      return {
+        ...endpoint,
+        mergedConfig,
+        projectName: project.name,
+        category: category.name
+      }
+    } catch (error) {
+      console.error('Error getting full endpoint:', error)
+      throw error
     }
   });
 }

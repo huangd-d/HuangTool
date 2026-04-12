@@ -1,10 +1,23 @@
 import { app } from 'electron'
 import { fileURLToPath } from 'url'
 import path from 'path'
+import fs from 'fs'
 
 // 模拟 __dirname 在 ES6 模块中
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+
+// 确保 swagger 目录存在
+const swaggerPath = path.join(__dirname, '../../swagger')
+if (!fs.existsSync(swaggerPath)) {
+  fs.mkdirSync(swaggerPath, { recursive: true })
+  console.log('Created swagger directory:', swaggerPath)
+}
+
+// 打印环境变量用于调试
+console.log('NODE_ENV:', process.env.NODE_ENV)
+console.log('App Path:', app.getAppPath())
+console.log('__dirname:', __dirname)
 
 // 🔥 关键代码：引入并启用热重载
 // 注意：这行代码需要在 app.whenReady() 之前执行
