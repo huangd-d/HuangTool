@@ -12,9 +12,9 @@ export { registerWindowEvents }
 export function initializeFirstTab() {
   // 等待主窗口加载完成后再创建第一个页签
   const mainWindow = getMainWindow()
-  if (mainWindow) {
-    mainWindow.webContents.once('did-finish-load', () => {
-      createTab('首页', '/');
-    });
-  }
+  // if (mainWindow) {
+  //   mainWindow.webContents.once('did-finish-load', () => {
+  //     createTab('首页', '/');
+  //   });
+  // }
 }

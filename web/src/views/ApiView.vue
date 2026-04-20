@@ -1,8 +1,15 @@
 <template>
   <div class="api-container">
-    <!-- 左侧导航 -->
-    <ApiSidebar @select-project="handleSelectProject"
-      @select-category="handleSelectCategory" @open-endpoint-tab="openEndpointTab" />
+    <!-- 左侧树结构 -->
+    <div class="api-sidebar">
+      <el-tree
+        :data="treeData"
+        :props="treeProps"
+        node-key="id"
+        @node-click="handleNodeClick"
+        default-expand-all
+      />
+    </div>
 
     <!-- 右侧内容 -->
     <div class="api-content">
@@ -63,8 +70,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import ApiSidebar from '../components/ApiSidebar.vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import EndpointView from '../components/EndpointView.vue'
 // 状态管理
 const selectedProject = ref(null)
@@ -72,6 +78,70 @@ const selectedCategory = ref(null)
 const tabs = ref([])
 const activeTabId = ref(null)
 const configExpanded = ref(false)
+
+// 树结构数据
+const treeData = ref([])
+
+// 树结构属性配置
+const treeProps = reactive({
+  children: 'children',
+  label: 'name'
+})
+
+// 加载项目数据
+async function loadProjects() {
+  if (window.electronAPI && window.electronAPI.getApiProjects) {
+    try {
+      const projects = await window.electronAPI.getApiProjects()
+      // 转换为树结构数据
+      treeData.value = projects.map(project => {
+        return {
+          id: project.id,
+          name: project.name,
+          type: 'project',
+          class: 'project-node',
+          children: (project.categories || []).map(category => {
+            return {
+              id: category.id,
+              name: category.name,
+              type: 'category',
+              class: 'category-node',
+              children: (category.endpoints || []).map(endpoint => {
+                return {
+                  id: endpoint.id,
+                  name: endpoint.name,
+                  type: 'endpoint',
+                  class: 'endpoint-node',
+                  endpoint: endpoint
+                }
+              })
+            }
+          })
+        }
+      })
+    } catch (error) {
+      console.error('Error loading projects:', error)
+    }
+  }
+}
+
+// 处理节点点击
+function handleNodeClick(node) {
+  if (node.type === 'project') {
+    // 选择项目
+    selectedProject.value = node
+    selectedCategory.value = null
+    // 清空相关的 tab
+    tabs.value = []
+    activeTabId.value = null
+  } else if (node.type === 'category') {
+    // 选择分类
+    selectedCategory.value = node
+  } else if (node.type === 'endpoint') {
+    // 打开接口 tab
+    openEndpointTab(node.endpoint)
+  }
+}
 
 // 切换配置面板展开/折叠
 function toggleConfig() {
@@ -111,7 +181,10 @@ function handleSelectCategory(category) {
   selectedCategory.value = category
 }
 
-
+// 生命周期
+onMounted(() => {
+  loadProjects()
+})
 
 // 保存项目配置
 async function saveProjectConfig() {
@@ -228,6 +301,74 @@ async function handleSendRequest(endpoint, projectConfig) {
   overflow-y: auto;
 }
 
+/* 左侧树结构 */
+.api-sidebar {
+  width: 300px;
+  background: #f5f5f5;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+/* 树结构样式 */
+.api-sidebar :deep(.el-tree) {
+  background: transparent;
+}
+
+.api-sidebar :deep(.el-tree-node) {
+  padding: 4px 0;
+}
+
+.api-sidebar :deep(.el-tree-node__content) {
+  height: 32px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.api-sidebar :deep(.el-tree-node__content:hover) {
+  background-color: rgba(64, 158, 255, 0.1);
+}
+
+.api-sidebar :deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background-color: rgba(64, 158, 255, 0.1);
+  font-weight: 500;
+}
+
+.api-sidebar :deep(.el-tree-node.is-current > .el-tree-node__content .el-tree-node__label) {
+  color: #409eff;
+}
+
+.api-sidebar :deep(.el-tree-node__expand-icon) {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.api-sidebar :deep(.el-tree-node__expand-icon.is-expanded) {
+  transform: rotate(90deg);
+}
+
+/* 树节点图标 */
+.api-sidebar :deep(.el-tree-node__label) {
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+/* 项目节点 */
+.api-sidebar :deep(.project-node) {
+  font-weight: 500;
+}
+
+/* 分类节点 */
+.api-sidebar :deep(.category-node) {
+  font-size: 12px;
+}
+
+/* 接口节点 */
+.api-sidebar :deep(.endpoint-node) {
+  font-size: 12px;
+  color: #606266;
+}
+
 /* 右侧内容 */
 .api-content {
   flex: 1;
@@ -248,7 +389,10 @@ async function handleSendRequest(endpoint, projectConfig) {
   justify-content: space-between;
   align-items: center;
   cursor: pointer;
-  padding: 5px 0;
+  padding: 10px 15px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background-color: #f0f0f0;
 }
 
 .config-header h3 {
@@ -256,23 +400,37 @@ async function handleSendRequest(endpoint, projectConfig) {
   font-size: 14px;
   font-weight: 600;
   color: #333;
+  transition: all 0.3s ease;
 }
 
 .toggle-icon {
-  font-size: 10px;
+  font-size: 12px;
   color: #666;
-  transition: transform 0.2s;
-}
-
-.config-content {
-  padding: 10px 0;
+  transition: transform 0.3s ease;
 }
 
 .config-header:hover {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 4px;
-  padding: 5px 10px;
-  margin: 0 -10px;
+  background-color: #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.config-content {
+  padding: 15px;
+  background-color: #ffffff;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .config-item {
