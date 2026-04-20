@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron'
+import { app, BaseWindow, ipcMain, Menu } from 'electron'
 import { getMainWindow } from './mainWindowManager.js'
 import { createTab, switchTab, closeTab, getActiveTabId, resizeViews } from './tabManager.js'
 
@@ -34,8 +34,8 @@ export function registerWindowEvents() {
   });
 
   // 页签管理事件
-  ipcMain.on('create-tab', (event, { title, path }) => {
-    createTab(title, path);
+  ipcMain.on('create-tab', (event, { title, path, bounds }) => {
+    createTab(title, path, bounds);
   });
 
   ipcMain.on('switch-tab', (event, tabId) => {
@@ -56,7 +56,7 @@ export function registerWindowEvents() {
 
   // 应用激活事件
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
+    if (app.getWindows().length === 0) {
       import('./mainWindowManager.js').then(({ createWindow }) => {
         createWindow()
       })

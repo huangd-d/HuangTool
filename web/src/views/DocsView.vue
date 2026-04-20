@@ -35,7 +35,7 @@
         
         <!-- Tab 内容 -->
         <div class="tab-content">
-          <div v-if="tabs.length > 0">
+          <template v-if="tabs.length > 0">
             <div 
               v-for="tab in tabs" 
               :key="tab.id" 
@@ -44,7 +44,7 @@
             >
               <webview :src="`app://${tab.doc}`" class="doc-viewer"></webview>
             </div>
-          </div>
+          </template>
           <div v-else class="preview-placeholder">
             请从左侧选择文档目录查看详细内容
           </div>

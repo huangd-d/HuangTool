@@ -27,7 +27,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   maximizeWindow: () => ipcRenderer.send('maximize-window'),
   closeWindow: () => ipcRenderer.send('close-window'),
   // 页签管理
-  createTab: (title, path) => ipcRenderer.send('create-tab', { title, path }),
+  createTab: (title, path, bounds) => ipcRenderer.send('create-tab', { title, path, bounds }),
   switchTab: (tabId) => ipcRenderer.send('switch-tab', tabId),
   closeTab: (tabId) => ipcRenderer.send('close-tab', tabId),
   // 页签事件监听
