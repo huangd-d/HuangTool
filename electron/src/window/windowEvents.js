@@ -1,5 +1,5 @@
 import { app, BaseWindow, ipcMain, Menu } from 'electron'
-import { getMainWindow } from './mainWindowManager.js'
+import { getMainWindow, getShellView, mainWindowBounds } from './mainWindowManager.js'
 import { createTab, switchTab, closeTab, getActiveTabId, resizeViews } from './tabManager.js'
 
 // 注册窗口控制事件
@@ -50,7 +50,19 @@ export function registerWindowEvents() {
   const mainWindow = getMainWindow()
   if (mainWindow) {
     mainWindow.on('resize', () => {
-      resizeViews(); // 使用专门的 resize 函数
+      // 更新 mainWindowBounds
+      const bounds = mainWindow.getBounds();
+      mainWindowBounds.width = bounds.width;
+      mainWindowBounds.height = bounds.height;
+      
+      // 调整壳视图大小
+      const shellView = getShellView();
+      if (shellView) {
+        shellView.setBounds({ x: 0, y: 0, width: bounds.width, height: bounds.height });
+      }
+      
+      // 调整当前显示的 WebContentsView 大小
+      resizeViews();
     });
   }
 

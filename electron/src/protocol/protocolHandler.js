@@ -37,18 +37,23 @@ export function handleProtocol() {
     const RESOURCE_PATH = path.join(app.getAppPath(), 'docs')
 
     // 拼接完整文件路径
-    // 处理路径，确保正确指向对应目录的 index.html
     let filePath
     if (pathname === '/' && hostname) {
-      // 处理 app://vue 格式的请求
+      // 处理 app://element-plus 格式的请求
       filePath = path.join(RESOURCE_PATH, hostname, 'index.html')
     } else if (pathname === '/' || pathname === '/home') {
       // 主页请求
       filePath = path.join(app.getAppPath(), 'index.html')
     } else {
-      // 文档目录请求
-      const dirName = pathname.replace(/^\/|\/$/g, '')
-      filePath = path.join(RESOURCE_PATH, dirName, 'index.html')
+      // 处理静态资源和其他文件请求
+      const normalizedPath = pathname.replace(/^\//, '')
+      if (hostname) {
+        // 带主机名的请求，如 app://element-plus/assets/style.css
+        filePath = path.join(RESOURCE_PATH, hostname, normalizedPath)
+      } else {
+        // 不带主机名的请求
+        filePath = path.join(RESOURCE_PATH, normalizedPath)
+      }
     }
 
     // 【安全关键】防止目录遍历攻击 (Path Traversal)

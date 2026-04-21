@@ -41,6 +41,7 @@ export function createTab(title, tabPath, bounds) {
       preload: path.join(app.getAppPath(), 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      webviewTag: true, // 这是关键配置
       partition: `persist:tab-${tabId}`,
     }
   });
@@ -56,7 +57,7 @@ export function createTab(title, tabPath, bounds) {
   mainWindow.contentView.addChildView(view);
 
   // 使用传入的 bounds 或默认值设置位置和大小
-  const viewBounds = bounds || { x: mainWindowBounds.x, y: mainWindowBounds.y, width: mainWindowBounds.width, height: mainWindowBounds.height - tabBarHeight };
+  const viewBounds = bounds || { x: mainWindowBounds.x, y: mainWindowBounds.y, width: mainWindowBounds.width, height: mainWindowBounds.height - mainWindowBounds.y };
   view.setBounds(viewBounds);
 
   
@@ -164,10 +165,7 @@ export function getActiveTabId() {
   return activeTabId
 }
 
-// 获取页签栏高度
-export function getTabBarHeight() {
-  return tabBarHeight
-}
+
 
 // 调整所有视图的大小（窗口大小变化时调用）
 export function resizeViews() {
@@ -179,7 +177,7 @@ export function resizeViews() {
   views.forEach(({ view, id }) => {
     if (id === activeTabId) {
       // 只调整当前激活的视图
-      view.setBounds({ x: mainWindowBounds.x, y: mainWindowBounds.y, width, height: height - tabBarHeight });
+      view.setBounds({ x: mainWindowBounds.x, y: mainWindowBounds.y, width, height: height - mainWindowBounds.y });
     }
   });
 }

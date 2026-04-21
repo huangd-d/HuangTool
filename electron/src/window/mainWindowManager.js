@@ -2,11 +2,17 @@ import { app, BaseWindow, WebContentsView, globalShortcut } from 'electron'
 import path from 'path'
 
 let mainWindow
+let shellView // 壳视图引用
 export const mainWindowBounds = {
   width: 1200,
   height: 800,
   x: 60,
   y: 48
+}
+
+// 获取壳视图
+export function getShellView() {
+  return shellView
 }
 
 // 创建主窗口
@@ -22,7 +28,7 @@ export function createWindow() {
     visualEffectState: 'active', // 激活视觉效果
   })
 
-  const webContentsView = new WebContentsView({
+  shellView = new WebContentsView({
     webPreferences: {
       preload: path.join(app.getAppPath(), 'preload.js'),
       contextIsolation: true,
@@ -33,25 +39,25 @@ export function createWindow() {
   })
 
   // 加载前端应用（壳视图：只有头部栏）
-  webContentsView.webContents.loadURL('http://localhost:5173');
-  mainWindow.contentView.addChildView(webContentsView);
-  webContentsView.setBounds({ x: 0, y: 0, width: mainWindowBounds.width, height: mainWindowBounds.height })
+  shellView.webContents.loadURL('http://localhost:5173');
+  mainWindow.contentView.addChildView(shellView);
+  shellView.setBounds({ x: 0, y: 0, width: mainWindowBounds.width, height: mainWindowBounds.height })
 
-  webContentsView.webContents.openDevTools({
+  shellView.webContents.openDevTools({
     mode: 'detach',    // 模式：'right', 'bottom', 'detach' (独立窗口)
     activate: true    // 是否自动激活窗口
   })
 
   // 处理资源清理
   mainWindow.on('closed', () => {
-    webContentsView.webContents.close()
+    shellView.webContents.close()
   })
 
   app.whenReady().then(() => {
     // 注册 Ctrl+Shift+I 快捷键
     globalShortcut.register('CommandOrControl+Shift+I', () => {
       // 切换调试控制台状态
-      webContentsView.webContents.toggleDevTools()
+      shellView.webContents.toggleDevTools()
     })
   })
 
