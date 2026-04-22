@@ -1,51 +1,35 @@
 <script setup>
-import { ref, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import WindowControls from 'components/WindowControls.vue'
-import { HomeFilled, Document, Memo, Files } from '@element-plus/icons-vue'
+import { menuItems, createTab } from 'config/menuConfig.js'
 
 const router = useRouter()
-const route = useRoute()
 
 const activeMenu = ref('home')
 
-const menuItems = [
-    { id: 'home', title: '首页', icon: HomeFilled, path: '/' },
-    { id: 'api', title: 'API管理', icon: Document, path: '/api' },
-    { id: 'docs', title: '技术文档访问', icon: Memo, path: '/docs' },
-    { id: 'office', title: '办公文件预览', icon: Files, path: '/office' }
-]
-
-
 const handleMenuClick = (menu) => {
     activeMenu.value = menu.id;
-    if (menu && window.electronAPI) {
-        const mainEl = document.getElementById('main').getBoundingClientRect();
-        const bounds = {
-            x: mainEl.left,
-            y: mainEl.top,
-            width: mainEl.width,
-            height: mainEl.height
-        };
-        window.electronAPI.createTab(menu.title, menu.path, bounds);
-    }
+    createTab(menu);
 }
 
-const updateActiveMenu = () => {
-    const currentPath = route.path
-    const menu = menuItems.find(item => item.path === currentPath)
-    if (menu) {
-        activeMenu.value = menu.id
+onMounted(() => {
+    handleMenuClick(menuItems[0]);
+    // 监听主进程发送的 navigate-to 事件，创建标签页
+    if (window.electronAPI) {
+        window.electronAPI.onNavigateTo((feature) => {
+            console.log('feature---', feature);
+            handleMenuClick(feature);
+        });
     }
-}
-
-watch(() => route.path, updateActiveMenu, { immediate: true })
+});
 </script>
 
 <template>
     <div class="app">
         <!-- 壳视图和完整视图显示头部栏 -->
         <header class="header">
+            <span>Htool</span>
             <!-- 右侧控制按钮 -->
             <WindowControls />
         </header>
@@ -97,7 +81,7 @@ watch(() => route.path, updateActiveMenu, { immediate: true })
     backdrop-filter: saturate(180%) blur(20px);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 0 16px;
     -webkit-app-region: drag;
     cursor: grab;
@@ -105,6 +89,20 @@ watch(() => route.path, updateActiveMenu, { immediate: true })
 
 .header:active {
     cursor: grabbing;
+}
+
+.header >span {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.header >span:hover {
+    color: #409eff;
+    transform: scale(1.05);
 }
 
 .sidebar-container {

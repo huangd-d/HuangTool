@@ -46,6 +46,14 @@ export function registerWindowEvents() {
     closeTab(tabId);
   });
 
+  // 导航事件 - 将导航请求发送到 Layout 所在的 shellView
+  ipcMain.on('navigate-to', (event, feature) => {
+    const shellView = getShellView();
+    if (shellView && shellView.webContents) {
+      shellView.webContents.send('navigate-to', feature);
+    }
+  });
+
   // 窗口大小变化事件
   const mainWindow = getMainWindow()
   if (mainWindow) {

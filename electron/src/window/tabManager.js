@@ -1,7 +1,7 @@
 import { app, WebContentsView } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { getMainWindow, mainWindowBounds } from './mainWindowManager.js'
+import { getMainWindow, mainWindowBounds, getShellView } from './mainWindowManager.js'
 
 // 模拟 __dirname 在 ES6 模块中
 const __filename = fileURLToPath(import.meta.url)

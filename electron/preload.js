@@ -33,5 +33,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 页签事件监听
   onTabCreated: (callback) => ipcRenderer.on('tab-created', (event, tab) => callback(tab)),
   onTabSwitched: (callback) => ipcRenderer.on('tab-switched', (event, tabId) => callback(tabId)),
-  onTabClosed: (callback) => ipcRenderer.on('tab-closed', (event, tabId) => callback(tabId))
+  onTabClosed: (callback) => ipcRenderer.on('tab-closed', (event, tabId) => callback(tabId)),
+  // 导航事件
+  navigateTo: (feature) => ipcRenderer.send('navigate-to', feature),
+  onNavigateTo: (callback) => ipcRenderer.on('navigate-to', (event, feature) => callback(feature))
 })

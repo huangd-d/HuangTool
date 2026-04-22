@@ -1,37 +1,15 @@
 <script setup>
-import { inject } from 'vue'
+import { menuItems } from 'config/menuConfig.js'
 
-// 注入创建页签的方法
-const createTab = inject('createTab')
+// 过滤出首页需要展示的功能项（排除首页本身）
+const features = menuItems.filter(item => item.id !== 'home')
 
-// 功能项列表
-const features = [
-  {
-    id: 1,
-    title: '接口调试',
-    description: '调试和测试API接口',
-    icon: '🔧',
-    path: '/api'
-  },
-  {
-    id: 2,
-    title: '文档预览',
-    description: '预览技术文档',
-    icon: '📄',
-    path: '/docs'
-  },
-  {
-    id: 3,
-    title: '文件预览',
-    description: '预览各种文件',
-    icon: '📁',
-    path: '/office'
-  }
-]
-
-// 导航到功能页面
-const navigateTo = (feature) => {
-  createTab(feature.title, feature.path)
+// 导航到功能页面，通过 IPC 通知主进程
+const handleFeatureClick = (feature) => {
+    if (window.electronAPI) {
+      const {icon, ...other} = feature;
+        window.electronAPI.navigateTo(other)
+    }
 }
 </script>
 
@@ -47,11 +25,11 @@ const navigateTo = (feature) => {
         v-for="feature in features" 
         :key="feature.id"
         class="feature-card"
-        @click="navigateTo(feature)"
+        @click="handleFeatureClick(feature)"
       >
-        <div class="feature-icon">{{ feature.icon }}</div>
+        <div class="feature-icon">{{ feature.hIcon }}</div>
         <h2 class="feature-title">{{ feature.title }}</h2>
-        <p class="feature-description">{{ feature.description }}</p>
+        <p class="feature-description">{{ feature.desc }}</p>
       </div>
     </div>
   </div>
