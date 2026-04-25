@@ -13,6 +13,8 @@ dist-ssr
 *.local
 
 electron/docs/*
+electron/web-dist/
+electron/dist/
 
 # Editor directories and files
 .vscode/*

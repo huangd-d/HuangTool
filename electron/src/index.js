@@ -1,14 +1,10 @@
 import { app } from 'electron'
-import { fileURLToPath } from 'url'
 import path from 'path'
 import fs from 'fs'
-
-// 模拟 __dirname 在 ES6 模块中
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+import { getSwaggerPath } from './utils/paths.js'
 
 // 确保 swagger 目录存在
-const swaggerPath = path.join(__dirname, '../../swagger')
+const swaggerPath = getSwaggerPath()
 if (!fs.existsSync(swaggerPath)) {
   fs.mkdirSync(swaggerPath, { recursive: true })
   console.log('Created swagger directory:', swaggerPath)
@@ -17,16 +13,7 @@ if (!fs.existsSync(swaggerPath)) {
 // 打印环境变量用于调试
 console.log('NODE_ENV:', process.env.NODE_ENV)
 console.log('App Path:', app.getAppPath())
-console.log('__dirname:', __dirname)
-
-// 🔥 关键代码：引入并启用热重载
-// 注意：这行代码需要在 app.whenReady() 之前执行
-try {
-  // 传入 electron 模块，reloader 会自动处理
-  require('electron-reloader')(module)
-} catch (err) {
-  // 忽略生产环境下的错误
-}
+console.log('isPackaged:', app.isPackaged)
 
 // 导入模块
 import { registerProtocol, handleProtocol } from './protocol/protocolHandler.js'
@@ -39,14 +26,14 @@ registerProtocol()
 
 // 应用就绪
 app.whenReady().then(() => {
+  // 注册协议处理（必须在 loadURL 之前，否则 app:// 协议无法解析）
+  handleProtocol()
+
   // 创建主窗口
   createWindow()
 
   // 初始化第一个页签
   initializeFirstTab()
-
-  // 注册协议处理
-  handleProtocol()
 
   // 注册窗口事件
   registerWindowEvents()

@@ -1,0 +1,13 @@
+{
+  "name": "htool",
+  "version": "1.0.0",
+  "private": true,
+  "description": "综合工具平台 - Build orchestrator",
+  "scripts": {
+    "dev:web": "cd web && npm run dev",
+    "dev:electron": "cd electron && npm start",
+    "build:web": "cd web && npm run build",
+    "build:win": "cd electron && npm run build:win",
+    "build:linux": "cd electron && npm run build:linux"
+  }
+}

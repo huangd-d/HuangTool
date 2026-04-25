@@ -1,17 +1,8 @@
 import fs from 'fs'
 import path from 'path'
-import { app, ipcMain } from 'electron'
-import { fileURLToPath } from 'url'
+import { ipcMain } from 'electron'
 import { sendRequest, mergeConfigs } from './requestHandler.js'
-
-// 模拟 __dirname 在 ES6 模块中
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-// 获取 swagger 目录路径
-function getSwaggerPath() {
-  return path.join(__dirname, '../../swagger')
-}
+import { getSwaggerPath } from '../utils/paths.js'
 
 // API 项目管理
 export function registerApiHandlers() {

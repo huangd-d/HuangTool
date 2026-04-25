@@ -6,43 +6,63 @@
   "author": "",
   "type": "module",
   "main": "src/index.js",
-  "directories": {
-    "doc": "docs"
-  },
   "scripts": {
     "start": "cross-env NODE_ENV=development electron .",
+    "build:web": "cd ../web && npm run build && cd ../electron",
     "build": "npm run build:web && electron-builder",
-    "build:web": "cd ../web && npm run build && cd ../electron"
+    "build:win": "npm run build:web && electron-builder --win",
+    "build:linux": "npm run build:web && electron-builder --linux"
   },
   "dependencies": {
-    "electron": "^41.1.1",
     "node-fetch": "^3.3.2",
     "proxy-agent": "^6.3.1"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",
-    "electron-builder": "^26.8.1",
-    "electron-reloader": "^1.2.3"
+    "electron": "^41.1.1",
+    "electron-builder": "^26.8.1"
   },
   "build": {
-    "appId": "com.electron.docapp",
-    "productName": "综合工具平台",
+    "appId": "com.electron.htool",
+    "productName": "HTool",
     "directories": {
       "output": "dist",
       "buildResources": "build"
     },
     "files": [
-      "main.js",
-      "preload.js",
-      "index.html",
-      "docs/**/*",
-      "../web/dist/**/*"
+      "src/**/*",
+      "preload.js"
+    ],
+    "extraResources": [
+      {
+        "from": "web-dist",
+        "to": "web-dist"
+      },
+      {
+        "from": "swagger",
+        "to": "swagger",
+        "filter": ["**/*.json"]
+      },
+      {
+        "from": "docs",
+        "to": "docs"
+      }
     ],
     "win": {
-      "target": [
-        "nsis",
-        "portable"
-      ]
+      "target": ["portable"],
+      "icon": "build/icon.ico"
+    },
+    "portable": {
+      "artifactName": "HTool-${version}-Portable.${ext}"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "icon": "build/icon.png",
+      "category": "Development",
+      "maintainer": "HTool",
+      "vendor": "HTool",
+      "synopsis": "综合工具平台 - 一站式开发工具解决方案",
+      "description": "基于 Electron + Vue 3 的内网前端工具箱桌面应用，提供 API 管理、技术文档预览、Office 文档预览三大模块。"
     }
   }
 }

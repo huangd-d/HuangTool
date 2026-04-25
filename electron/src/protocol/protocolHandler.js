@@ -2,85 +2,120 @@ import { app, protocol, net } from 'electron'
 import fs from 'fs'
 import path from 'path'
 import { pathToFileURL } from 'url'
+import { getDocsPath } from '../utils/paths.js'
 
-// 注册自定义协议
 export function registerProtocol() {
-  // 1. 注册特权协议 (必须在 app.ready 之前)
   protocol.registerSchemesAsPrivileged([
     {
       scheme: 'app',
       privileges: {
-        secure: true,           // 安全：视为 HTTPS
-        standard: true,         // 标准：支持相对路径解析
-        supportFetchAPI: true,  // 支持 fetch API
-        stream: true,           // 支持流：这对加载大文件或视频至关重要
-        bypassCSP: true,        // 绕过内容安全策略（开发时方便，生产环境需谨慎）
-        allowServiceWorkers: true, // 允许 Service Worker
-        corsEnabled: true       // 允许跨域（视需求开启）
+        secure: true,
+        standard: true,
+        supportFetchAPI: true,
+        stream: true,
+        bypassCSP: true,
+        allowServiceWorkers: true,
+        corsEnabled: true
       }
     }
-  ]);
+  ])
 }
 
-// 处理协议请求
 export function handleProtocol() {
-  // 2. 注册协议处理程序 (在 app.ready 之后)
   protocol.handle('app', async (request) => {
     const url = new URL(request.url)
-
-    // 解析路径：例如 app://vue 或 app://vite
     const pathname = url.pathname
     const hostname = url.hostname
-    
-    // 定义你的本地资源根目录
-    // 直接使用 docs 目录
-    const RESOURCE_PATH = path.join(app.getAppPath(), 'docs')
 
-    // 拼接完整文件路径
+    // ---- 前端应用路由：app://app/... → web-dist/ ----
+    if (hostname === 'app') {
+      const WEB_DIST_PATH = app.isPackaged
+        ? path.join(process.resourcesPath, 'web-dist')
+        : path.join(app.getAppPath(), 'web-dist')
+      let filePath = path.join(WEB_DIST_PATH, pathname)
+
+      const resolvedFilePath = path.resolve(filePath)
+      const resolvedBase = path.resolve(WEB_DIST_PATH)
+      if (!resolvedFilePath.startsWith(resolvedBase + path.sep) && resolvedFilePath !== resolvedBase) {
+        return new Response('403 Forbidden', { status: 403, statusText: 'Forbidden' })
+      }
+
+      // 目录路径或文件不存在时，回退到 index.html（SPA 路由）
+      let isDirectory = false
+      try {
+        const stat = await fs.promises.stat(filePath)
+        isDirectory = stat.isDirectory()
+      } catch {
+        // 文件不存在，走 SPA fallback
+      }
+
+      if (!isDirectory) {
+        try {
+          await fs.promises.access(filePath)
+          return net.fetch(pathToFileURL(filePath).toString())
+        } catch {
+          // 文件不可访问，走 SPA fallback
+        }
+      }
+
+      const indexPath = path.join(WEB_DIST_PATH, 'index.html')
+      return net.fetch(pathToFileURL(indexPath).toString())
+    }
+
+    // ---- 文档站点路由：app://{docName}/... → docs/{docName}/... ----
+    const DOCS_PATH = getDocsPath()
+
     let filePath
     if (pathname === '/' && hostname) {
-      // 处理 app://element-plus 格式的请求
-      filePath = path.join(RESOURCE_PATH, hostname, 'index.html')
+      filePath = path.join(DOCS_PATH, hostname, 'index.html')
     } else if (pathname === '/' || pathname === '/home') {
-      // 主页请求
       filePath = path.join(app.getAppPath(), 'index.html')
     } else {
-      // 处理静态资源和其他文件请求
       const normalizedPath = pathname.replace(/^\//, '')
       if (hostname) {
-        // 带主机名的请求，如 app://element-plus/assets/style.css
-        filePath = path.join(RESOURCE_PATH, hostname, normalizedPath)
+        filePath = path.join(DOCS_PATH, hostname, normalizedPath)
       } else {
-        // 不带主机名的请求
-        filePath = path.join(RESOURCE_PATH, normalizedPath)
+        filePath = path.join(DOCS_PATH, normalizedPath)
       }
     }
 
-    // 【安全关键】防止目录遍历攻击 (Path Traversal)
-    // 确保请求的路径仍在允许的目录内部
-    const allowedPaths = [
-      path.join(app.getAppPath(), 'docs'),
-      app.getAppPath()
-    ]
-    
-    const isAllowed = allowedPaths.some(allowedPath => 
-      filePath.startsWith(allowedPath)
+    // 路径遍历防护
+    const resolvedFilePath = path.resolve(filePath)
+    const allowedPaths = [path.resolve(DOCS_PATH), path.resolve(app.getAppPath())]
+    if (app.isPackaged) {
+      allowedPaths.push(path.resolve(process.resourcesPath))
+    }
+    const isAllowed = allowedPaths.some(allowedPath =>
+      resolvedFilePath.startsWith(allowedPath + path.sep) || resolvedFilePath === allowedPath
     )
-    
     if (!isAllowed) {
       return new Response('403 Forbidden', { status: 403, statusText: 'Forbidden' })
     }
 
+    // 尝试多种路径匹配：精确文件 → 目录下 index.html → 加 .html 后缀
+    const candidates = [filePath]
     try {
-      // 检查文件是否存在
-      await fs.promises.access(filePath)
-      
-      // 使用 net.fetch 将文件路径转换为流式响应
-      // 这比 fs.readFile 性能更好，且支持视频/大文件
-      return net.fetch(pathToFileURL(filePath).toString())
-    } catch (error) {
-      console.error('Error loading file:', error)
-      return new Response('File not found', { status: 404, statusText: 'Not Found' })
+      const stat = await fs.promises.stat(filePath)
+      if (stat.isDirectory()) {
+        candidates[0] = path.join(filePath, 'index.html')
+      }
+    } catch {
+      // 文件不存在，追加候选路径
+      candidates.push(path.join(filePath, 'index.html'))
+      candidates.push(filePath + '.html')
     }
-  });
+
+    for (const candidate of candidates) {
+      try {
+        const stat = await fs.promises.stat(candidate)
+        if (!stat.isDirectory()) {
+          return net.fetch(pathToFileURL(candidate).toString())
+        }
+      } catch {
+        // 继续尝试下一个候选
+      }
+    }
+
+    return new Response('File not found', { status: 404, statusText: 'Not Found' })
+  })
 }

@@ -1,14 +1,10 @@
 import { app, WebContentsView } from 'electron'
 import path from 'path'
-import { fileURLToPath } from 'url'
 import { getMainWindow, mainWindowBounds, getShellView } from './mainWindowManager.js'
+import { getAppURL } from '../utils/appUrl.js'
 
-// 模拟 __dirname 在 ES6 模块中
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
-
-let views = new Map() // 存储 WebContentsView 实例
-let activeTabId = null // 当前激活的页签 ID
+let views = new Map()
+let activeTabId = null
 
 // 根据 path 查找已存在的页签
 function findTabByPath(tabPath) {
@@ -26,7 +22,6 @@ export function createTab(title, tabPath, bounds) {
   const existingTabId = findTabByPath(tabPath);
 
   if (existingTabId) {
-    // 已存在，切换到该页签
     switchTab(existingTabId);
     return existingTabId;
   }
@@ -41,15 +36,14 @@ export function createTab(title, tabPath, bounds) {
       preload: path.join(app.getAppPath(), 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      webviewTag: true, // 这是关键配置
+      webviewTag: true,
       partition: `persist:tab-${tabId}`,
     }
   });
-  console.log('view---', view, title, tabPath, bounds);
 
   // 加载页面（添加 tab 参数：无头部栏，有内容区）
-  const devUrl = `http://localhost:5173${tabPath}?tab=true`;
-  view.webContents.loadURL(devUrl).catch(err => {
+  const url = getAppURL(`${tabPath}?tab=true`);
+  view.webContents.loadURL(url).catch(err => {
     console.error(`加载页面失败 [${tabId}]:`, err);
   });
 
@@ -59,8 +53,6 @@ export function createTab(title, tabPath, bounds) {
   // 使用传入的 bounds 或默认值设置位置和大小
   const viewBounds = bounds || { x: mainWindowBounds.x, y: mainWindowBounds.y, width: mainWindowBounds.width, height: mainWindowBounds.height - mainWindowBounds.y };
   view.setBounds(viewBounds);
-
-  
 
   // 存储 WebContentsView 实例
   views.set(tabId, { id: tabId, title, path: tabPath, view });
@@ -78,7 +70,6 @@ export function createTab(title, tabPath, bounds) {
 
 // 切换页签（支持 tabId 或 path）
 export function switchTab(tabIdOrPath, bounds = null) {
-  // 如果传入的是 path，先查找对应的 tabId
   let tabId = tabIdOrPath;
   if (typeof tabIdOrPath === 'string' && !views.has(tabIdOrPath)) {
     tabId = findTabByPath(tabIdOrPath);
@@ -95,7 +86,6 @@ export function switchTab(tabIdOrPath, bounds = null) {
   // 隐藏所有 WebContentsView - 设置为不可见区域
   views.forEach(({ view, id }) => {
     if (id !== tabId) {
-      // 将非活动视图移到屏幕外或设置尺寸为0
       view.setBounds({ x: mainWindowBounds.x, y: mainWindowBounds.y, width: 0, height: 0 });
     }
   });
@@ -103,7 +93,6 @@ export function switchTab(tabIdOrPath, bounds = null) {
 
   // 显示当前 WebContentsView
   tab.view.setBounds(viewBounds);
-
 
   // 更新激活的页签 ID
   activeTabId = tabId;
@@ -129,7 +118,7 @@ export function closeTab(tabId) {
     mainWindow.removeChildView(tab.view);
   }
 
-  // 清理事件监听器（如果有的话）
+  // 清理事件监听器
   tab.view.webContents.removeAllListeners();
   tab.view.webContents.destroy();
 
@@ -141,7 +130,6 @@ export function closeTab(tabId) {
     const firstTabId = Array.from(views.keys())[0];
     switchTab(firstTabId);
   } else if (views.size === 0) {
-    // 如果没有页签了，重置 activeTabId
     activeTabId = null;
   }
 
@@ -151,7 +139,7 @@ export function closeTab(tabId) {
   }
 }
 
-// 获取所有页签（返回可序列化的数据）
+// 获取所有页签
 export function getAllTabs() {
   const tabs = [];
   views.forEach(({ id, title, path }) => {
@@ -165,8 +153,6 @@ export function getActiveTabId() {
   return activeTabId
 }
 
-
-
 // 调整所有视图的大小（窗口大小变化时调用）
 export function resizeViews() {
   const mainWindow = getMainWindow()
@@ -176,7 +162,6 @@ export function resizeViews() {
 
   views.forEach(({ view, id }) => {
     if (id === activeTabId) {
-      // 只调整当前激活的视图
       view.setBounds({ x: mainWindowBounds.x, y: mainWindowBounds.y, width, height: height - mainWindowBounds.y });
     }
   });

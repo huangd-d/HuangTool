@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head><title>HTool Icon Generator</title></head>
+<body>
+<h2>HTool Icon Generator - PornHub Style</h2>
+<canvas id="icon" width="256" height="256"></canvas>
+<br><br>
+<button onclick="downloadPNG()">Download PNG</button>
+<button onclick="downloadICO()">Download ICO (256px PNG)</button>
+
+<script>
+const canvas = document.getElementById('icon');
+const ctx = canvas.getContext('2d');
+const SIZE = 256;
+
+function drawRoundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+function generateIcon(size) {
+  canvas.width = size;
+  canvas.height = size;
+  ctx.clearRect(0, 0, size, size);
+
+  const pad = size * 0.02;
+  const outerR = size * 0.2;
+
+  // Black rounded rectangle background
+  ctx.fillStyle = '#000000';
+  drawRoundedRect(pad, pad, size - pad * 2, size - pad * 2, outerR);
+  ctx.fill();
+
+  // Inner content area
+  const inner = {
+    x: pad + size * 0.05,
+    y: pad + size * 0.05,
+    w: size - (pad + size * 0.05) * 2,
+    h: size - (pad + size * 0.05) * 2
+  };
+
+  // Split point: left 55% for "H", right 45% for orange pill
+  const splitX = inner.x + inner.w * 0.53;
+
+  // Orange pill on the right
+  const pill = {
+    x: splitX + size * 0.02,
+    y: inner.y + inner.h * 0.18,
+    w: inner.w * 0.43,
+    h: inner.h * 0.64
+  };
+  const pillR = pill.h / 2;
+
+  ctx.fillStyle = '#FF9900';
+  drawRoundedRect(pill.x, pill.y, pill.w, pill.h, pillR);
+  ctx.fill();
+
+  // "H" text in white on the left
+  const fontSize = size * 0.52;
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `bold ${fontSize}px Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  const hCenterX = (inner.x + splitX) / 2;
+  const hCenterY = size / 2;
+  ctx.fillText('H', hCenterX, hCenterY + size * 0.01);
+
+  // Small tool icon "⚙" in the orange pill
+  const smallSize = size * 0.22;
+  ctx.fillStyle = '#000000';
+  ctx.font = `bold ${smallSize}px Arial, sans-serif`;
+  const pillCX = pill.x + pill.w / 2;
+  const pillCY = pill.y + pill.h / 2;
+  ctx.fillText('⚙', pillCX, pillCY + size * 0.01);
+}
+
+generateIcon(256);
+
+function downloadPNG() {
+  const link = document.createElement('a');
+  link.download = 'icon.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function downloadICO() {
+  // Generate 256px as PNG-based ICO
+  generateIcon(256);
+  const link = document.createElement('a');
+  link.download = 'icon.ico';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>

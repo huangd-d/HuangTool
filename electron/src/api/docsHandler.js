@@ -1,10 +1,11 @@
 import fs from 'fs'
 import path from 'path'
-import { app, ipcMain } from 'electron'
+import { ipcMain } from 'electron'
+import { getDocsPath } from '../utils/paths.js'
 
 // 获取文档目录
 export async function getDocsDirectories() {
-  const docsPath = path.join(app.getAppPath(), 'docs')
+  const docsPath = getDocsPath()
   try {
     const entries = await fs.promises.readdir(docsPath, { withFileTypes: true })
     return entries

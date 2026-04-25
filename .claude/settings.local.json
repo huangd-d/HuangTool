@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ' *)",
+      "Bash(npx asar *)",
+      "Bash(grep -E \"^\\\\\\\\\\\\\\(src|index\\\\.html\\)\")",
+      "WebFetch(domain:cn.pornhub.com)",
+      "WebFetch(domain:www.pornhub.com)",
+      "WebSearch",
+      "Bash(npm list *)",
+      "Bash(python -c \"from PIL import Image; print\\('Pillow available'\\)\")",
+      "Bash(pip install *)",
+      "Bash(python generate_icon.py)",
+      "Bash(node *)"
+    ]
+  }
+}

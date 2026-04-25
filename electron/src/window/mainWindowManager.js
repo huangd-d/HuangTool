@@ -1,8 +1,9 @@
 import { app, BaseWindow, WebContentsView, globalShortcut } from 'electron'
 import path from 'path'
+import { getAppURL } from '../utils/appUrl.js'
 
 let mainWindow
-let shellView // 壳视图引用
+let shellView
 export const mainWindowBounds = {
   width: 1200,
   height: 800,
@@ -20,49 +21,49 @@ export function createWindow() {
   mainWindow = new BaseWindow({
     width: mainWindowBounds.width,
     height: mainWindowBounds.height,
-    frame: false, // 去除默认标题栏
-    roundedCorners: true, // 启用圆角
-    // transparent: true, // 启用透明背景
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // 设置背景颜色为半透明黑色
-    backgroundMaterial: 'acrylic', // 启用背景材质，增加阴影效果
-    visualEffectState: 'active', // 激活视觉效果
+    frame: false,
+    roundedCorners: true,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundMaterial: 'acrylic',
+    visualEffectState: 'active',
   })
 
   shellView = new WebContentsView({
     webPreferences: {
       preload: path.join(app.getAppPath(), 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false, // 必须关闭以保证安全
-      webSecurity: true,       // 保持开启，依靠自定义协议解决跨域
-      webviewTag: true,        // 启用 webview 标签
+      nodeIntegration: false,
+      webSecurity: true,
+      webviewTag: true,
     }
   })
 
-  // 加载前端应用（壳视图：只有头部栏）
-  shellView.webContents.loadURL('http://localhost:5173');
-  mainWindow.contentView.addChildView(shellView);
+  // 加载前端应用
+  shellView.webContents.loadURL(getAppURL('/'))
+  mainWindow.contentView.addChildView(shellView)
   shellView.setBounds({ x: 0, y: 0, width: mainWindowBounds.width, height: mainWindowBounds.height })
 
-  shellView.webContents.openDevTools({
-    mode: 'detach',    // 模式：'right', 'bottom', 'detach' (独立窗口)
-    activate: true    // 是否自动激活窗口
-  })
+  // 仅开发模式打开 DevTools
+  if (!app.isPackaged) {
+    shellView.webContents.openDevTools({
+      mode: 'detach',
+      activate: true
+    })
+  }
 
   // 处理资源清理
   mainWindow.on('closed', () => {
     shellView.webContents.close()
   })
 
-  app.whenReady().then(() => {
-    // 注册 Ctrl+Shift+I 快捷键
-    globalShortcut.register('CommandOrControl+Shift+I', () => {
-      // 切换调试控制台状态
-      shellView.webContents.toggleDevTools()
+  // 仅开发模式注册 DevTools 快捷键
+  if (!app.isPackaged) {
+    app.whenReady().then(() => {
+      globalShortcut.register('CommandOrControl+Shift+I', () => {
+        shellView.webContents.toggleDevTools()
+      })
     })
-  })
-
-  // 强制打开开发者工具（开发环境）
-  // webContentsView.webContents.openDevTools({ mode: 'detach' });
+  }
 
   return mainWindow
 }
