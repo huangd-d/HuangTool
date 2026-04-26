@@ -93,22 +93,22 @@ onMounted(() => {
 
 .header >span {
     font-size: 18px;
-    font-weight: 600;
-    color: #ffffff;
+    font-weight: 700;
+    color: var(--accent);
     font-family: 'Arial', sans-serif;
     letter-spacing: 1px;
     transition: all 0.3s ease;
 }
 
 .header >span:hover {
-    color: #409eff;
+    color: var(--accent);
     transform: scale(1.05);
 }
 
 .sidebar-container {
     grid-area: sidebar;
-    background-color: #f0f0f0;
-    border-right: 1px solid #dcdfe6;
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border);
     height: 100%;
 }
 
@@ -138,22 +138,20 @@ onMounted(() => {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    color: #606266;
+    color: var(--text-secondary);
     position: relative;
     overflow: hidden;
 }
 
 .menu-item:hover {
-    background-color: #ecf5ff;
-    color: #409eff;
+    background-color: rgba(255, 144, 0, 0.15);
+    color: var(--accent);
     transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
 }
 
 .menu-item.active {
-    background-color: #ecf5ff;
-    color: #409eff;
-    box-shadow: 0 2px 8px rgba(64, 158, 255, 0.2);
+    background-color: rgba(255, 144, 0, 0.15);
+    color: var(--accent);
 }
 
 .menu-item.active::after {
@@ -164,7 +162,7 @@ onMounted(() => {
     transform: translateY(-50%);
     width: 3px;
     height: 60%;
-    background-color: #409eff;
+    background-color: var(--accent);
     border-radius: 0 2px 2px 0;
 }
 

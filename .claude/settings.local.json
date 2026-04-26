@@ -14,7 +14,8 @@
       "Bash(node *)",
       "Bash(git commit -m ' *)",
       "Bash(npm run *)",
-      "Bash(npx electron *)"
+      "Bash(npx electron *)",
+      "Bash(git add *)"
     ]
   }
 }

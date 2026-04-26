@@ -154,7 +154,7 @@ function handleSave() {
 }
 
 .dialog {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
   padding: 20px;
   width: 500px;
@@ -166,7 +166,7 @@ function handleSave() {
 .dialog h3 {
   margin-top: 0;
   margin-bottom: 15px;
-  color: #333;
+  color: var(--text);
 }
 
 .dialog-content {
@@ -182,7 +182,7 @@ function handleSave() {
   margin-bottom: 5px;
   font-size: 12px;
   font-weight: 500;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .form-item input,
@@ -190,7 +190,7 @@ function handleSave() {
 .form-item textarea {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 4px;
   box-sizing: border-box;
   font-size: 12px;
@@ -208,7 +208,7 @@ function handleSave() {
 
 .dialog-actions button {
   padding: 8px 16px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;

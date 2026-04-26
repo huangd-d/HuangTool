@@ -439,7 +439,7 @@ function copyResponse() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--bg-secondary);
 }
 
 /* 顶部请求栏 */
@@ -447,16 +447,16 @@ function copyResponse() {
   display: flex;
   gap: 10px;
   padding: 15px 20px;
-  background: #fafafa;
-  border-bottom: 1px solid #e5e5e5;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
   align-items: center;
 }
 
 .method-select {
   padding: 8px 12px;
-  border: 1px solid #d1d1d1;
+  border: 1px solid var(--border);
   border-radius: 6px;
-  background: white;
+  background: var(--bg-tertiary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -465,7 +465,7 @@ function copyResponse() {
 }
 
 .method-select:hover {
-  border-color: #007aff;
+  border-color: var(--accent);
 }
 
 .method-select.get {
@@ -473,7 +473,7 @@ function copyResponse() {
 }
 
 .method-select.post {
-  color: #007aff;
+  color: var(--accent);
 }
 
 .method-select.put {
@@ -491,7 +491,7 @@ function copyResponse() {
 .url-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #d1d1d1;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 13px;
   font-family: 'SF Mono', 'Courier New', monospace;
@@ -500,14 +500,14 @@ function copyResponse() {
 
 .url-input:focus {
   outline: none;
-  border-color: #007aff;
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 144, 0, 0.15);
 }
 
 .send-btn {
   padding: 8px 24px;
-  background: #007aff;
-  color: white;
+  background: var(--accent);
+  color: #000000;
   border: none;
   border-radius: 6px;
   font-size: 13px;
@@ -517,7 +517,7 @@ function copyResponse() {
 }
 
 .send-btn:hover:not(:disabled) {
-  background: #0056cc;
+  background: var(--accent-hover);
 }
 
 .send-btn:disabled {
@@ -530,7 +530,7 @@ function copyResponse() {
   flex: 1;
   display: flex;
   gap: 1px;
-  background: #e5e5e5;
+  background: var(--border);
   overflow: hidden;
 }
 
@@ -539,15 +539,15 @@ function copyResponse() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: var(--bg-secondary);
   overflow: hidden;
 }
 
 /* 标签页头部 */
 .tabs-header {
   display: flex;
-  background: #fafafa;
-  border-bottom: 1px solid #e5e5e5;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .tab-item {
@@ -555,20 +555,20 @@ function copyResponse() {
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  color: #666;
+  color: var(--text-secondary);
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
 }
 
 .tab-item:hover {
-  color: #007aff;
-  background: #f5f5f5;
+  color: var(--accent);
+  background: var(--bg-tertiary);
 }
 
 .tab-item.active {
-  color: #007aff;
-  border-bottom-color: #007aff;
-  background: white;
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--bg-secondary);
 }
 
 /* 标签内容 */
@@ -584,9 +584,9 @@ function copyResponse() {
 
 /* 参数表格 */
 .param-table {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 8px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border);
   overflow: hidden;
 }
 
@@ -595,11 +595,11 @@ function copyResponse() {
   grid-template-columns: 40px 1fr 1fr 50px;
   gap: 10px;
   padding: 10px 15px;
-  background: #fafafa;
+  background: var(--bg-secondary);
   font-size: 12px;
   font-weight: 600;
-  color: #666;
-  border-bottom: 1px solid #e5e5e5;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .table-row {
@@ -607,7 +607,7 @@ function copyResponse() {
   grid-template-columns: 40px 1fr 1fr 50px;
   gap: 10px;
   padding: 8px 15px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border);
   align-items: center;
 }
 
@@ -618,7 +618,7 @@ function copyResponse() {
 .table-row input[type="text"] {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 12px;
   transition: all 0.2s;
@@ -626,8 +626,8 @@ function copyResponse() {
 
 .table-row input[type="text"]:focus {
   outline: none;
-  border-color: #007aff;
-  box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(255, 144, 0, 0.15);
 }
 
 .table-row input[type="checkbox"] {
@@ -644,24 +644,24 @@ function copyResponse() {
 
 .add-row {
   padding: 12px 15px;
-  background: #fafafa;
+  background: var(--bg-secondary);
 }
 
 .add-btn {
   width: 100%;
   padding: 8px;
   background: transparent;
-  border: 1px dashed #d1d1d1;
+  border: 1px dashed var(--border);
   border-radius: 4px;
-  color: #007aff;
+  color: var(--accent);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .add-btn:hover {
-  background: #f0f8ff;
-  border-color: #007aff;
+  background: rgba(255, 144, 0, 0.1);
+  border-color: var(--accent);
 }
 
 .icon-btn {
@@ -669,7 +669,7 @@ function copyResponse() {
   height: 24px;
   border: none;
   background: transparent;
-  color: #999;
+  color: var(--text-hint);
   font-size: 18px;
   cursor: pointer;
   border-radius: 4px;
@@ -687,7 +687,7 @@ function copyResponse() {
   gap: 15px;
   margin-bottom: 15px;
   padding: 10px;
-  background: #fafafa;
+  background: var(--bg-secondary);
   border-radius: 6px;
 }
 
@@ -696,7 +696,7 @@ function copyResponse() {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
@@ -712,7 +712,7 @@ function copyResponse() {
   width: 100%;
   min-height: 300px;
   padding: 12px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-family: 'SF Mono', 'Courier New', monospace;
   font-size: 12px;
@@ -723,8 +723,8 @@ function copyResponse() {
 
 .body-textarea:focus {
   outline: none;
-  border-color: #007aff;
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 144, 0, 0.15);
 }
 
 .body-actions {
@@ -735,8 +735,8 @@ function copyResponse() {
 
 .action-btn {
   padding: 6px 12px;
-  background: white;
-  border: 1px solid #d1d1d1;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
@@ -744,9 +744,9 @@ function copyResponse() {
 }
 
 .action-btn:hover {
-  background: #f5f5f5;
-  border-color: #007aff;
-  color: #007aff;
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 /* Authorization */
@@ -757,10 +757,10 @@ function copyResponse() {
 .auth-selector select {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #d1d1d1;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 13px;
-  background: white;
+  background: var(--bg-secondary);
   cursor: pointer;
 }
 
@@ -775,13 +775,13 @@ function copyResponse() {
   margin-bottom: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .form-item input {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #d1d1d1;
+  border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 13px;
   transition: all 0.2s;
@@ -789,8 +789,8 @@ function copyResponse() {
 
 .form-item input:focus {
   outline: none;
-  border-color: #007aff;
-  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 144, 0, 0.15);
 }
 
 /* 响应面板 */
@@ -798,8 +798,8 @@ function copyResponse() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
-  border-left: 1px solid #e5e5e5;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
   overflow: hidden;
 }
 
@@ -808,8 +808,8 @@ function copyResponse() {
   justify-content: space-between;
   align-items: center;
   padding: 12px 15px;
-  background: #fafafa;
-  border-bottom: 1px solid #e5e5e5;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .status-info {
@@ -844,7 +844,7 @@ function copyResponse() {
 
 .status-text {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .response-meta {
@@ -855,14 +855,14 @@ function copyResponse() {
 
 .meta-item {
   font-size: 12px;
-  color: #999;
+  color: var(--text-hint);
   font-family: 'SF Mono', 'Courier New', monospace;
 }
 
 .response-tabs {
   display: flex;
-  background: #fafafa;
-  border-bottom: 1px solid #e5e5e5;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
 }
 
 .response-tab {
@@ -870,19 +870,19 @@ function copyResponse() {
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  color: #666;
+  color: var(--text-secondary);
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
 }
 
 .response-tab:hover {
-  color: #007aff;
+  color: var(--accent);
 }
 
 .response-tab.active {
-  color: #007aff;
-  border-bottom-color: #007aff;
-  background: white;
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: var(--bg-secondary);
 }
 
 .response-content {
@@ -898,7 +898,7 @@ function copyResponse() {
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
-  color: #333;
+  color: var(--text);
 }
 
 .response-headers {
@@ -911,19 +911,19 @@ function copyResponse() {
   display: flex;
   gap: 8px;
   padding: 8px;
-  background: #fafafa;
+  background: var(--bg-secondary);
   border-radius: 4px;
   font-size: 12px;
 }
 
 .header-key {
   font-weight: 600;
-  color: #007aff;
+  color: var(--accent);
   font-family: 'SF Mono', 'Courier New', monospace;
 }
 
 .header-value {
-  color: #666;
+  color: var(--text-secondary);
   font-family: 'SF Mono', 'Courier New', monospace;
   word-break: break-all;
 }
@@ -934,7 +934,7 @@ function copyResponse() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--text-hint);
   font-size: 13px;
 }
 </style>

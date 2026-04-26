@@ -242,7 +242,7 @@ onMounted(() => {
 }
 
 .tab-close:hover {
-  background-color: rgba(60, 64, 67, 0.1);
+  background-color: rgba(255, 144, 0, 0.15);
   color: var(--text);
 }
 
@@ -297,6 +297,6 @@ onMounted(() => {
 
 .docs-sidebar ul::-webkit-scrollbar-thumb:hover,
 .tab-header::-webkit-scrollbar-thumb:hover {
-  background: #c1c1c1;
+  background: #444444;
 }
 </style>

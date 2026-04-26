@@ -205,7 +205,7 @@ onUnmounted(() => {
 }
 
 .select-button button:hover {
-  background-color: #e8f0fe;
+  background-color: rgba(255, 144, 0, 0.15);
   border-color: var(--accent);
 }
 
@@ -301,7 +301,7 @@ onUnmounted(() => {
 }
 
 .tab-close:hover {
-  background-color: rgba(60, 64, 67, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
   color: var(--text);
 }
 
@@ -384,6 +384,6 @@ onUnmounted(() => {
 
 .recent-files::-webkit-scrollbar-thumb:hover,
 .tab-header::-webkit-scrollbar-thumb:hover {
-  background: #c1c1c1;
+  background: #444444;
 }
 </style>

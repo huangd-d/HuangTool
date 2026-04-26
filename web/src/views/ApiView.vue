@@ -304,8 +304,8 @@ async function handleSendRequest(endpoint, projectConfig) {
 /* 左侧树结构 */
 .api-sidebar {
   width: 300px;
-  background: #f5f5f5;
-  border-right: 1px solid #ddd;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
   overflow-y: auto;
   padding: 15px;
 }
@@ -326,16 +326,16 @@ async function handleSendRequest(endpoint, projectConfig) {
 }
 
 .api-sidebar :deep(.el-tree-node__content:hover) {
-  background-color: rgba(64, 158, 255, 0.1);
+  background-color: rgba(255, 144, 0, 0.1);
 }
 
 .api-sidebar :deep(.el-tree-node.is-current > .el-tree-node__content) {
-  background-color: rgba(64, 158, 255, 0.1);
+  background-color: rgba(255, 144, 0, 0.1);
   font-weight: 500;
 }
 
 .api-sidebar :deep(.el-tree-node.is-current > .el-tree-node__content .el-tree-node__label) {
-  color: #409eff;
+  color: var(--accent);
 }
 
 .api-sidebar :deep(.el-tree-node__expand-icon) {
@@ -366,7 +366,7 @@ async function handleSendRequest(endpoint, projectConfig) {
 /* 接口节点 */
 .api-sidebar :deep(.endpoint-node) {
   font-size: 12px;
-  color: #606266;
+  color: var(--text-secondary);
 }
 
 /* 右侧内容 */
@@ -379,8 +379,8 @@ async function handleSendRequest(endpoint, projectConfig) {
 
 /* 配置面板 */
 .config-panel {
-  background: #f9f9f9;
-  border-bottom: 1px solid #ddd;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
   padding: 10px 15px;
 }
 
@@ -392,31 +392,31 @@ async function handleSendRequest(endpoint, projectConfig) {
   padding: 10px 15px;
   border-radius: 8px;
   transition: all 0.3s ease;
-  background-color: #f0f0f0;
+  background-color: var(--bg-tertiary);
 }
 
 .config-header h3 {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: var(--text);
   transition: all 0.3s ease;
 }
 
 .toggle-icon {
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   transition: transform 0.3s ease;
 }
 
 .config-header:hover {
-  background-color: #e0e0e0;
+  background-color: var(--border);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .config-content {
   padding: 15px;
-  background-color: #ffffff;
+  background-color: var(--bg-secondary);
   border-radius: 0 0 8px 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   animation: slideDown 0.3s ease;
@@ -446,7 +446,7 @@ async function handleSendRequest(endpoint, projectConfig) {
   height: 32px;
   line-height: 32px;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   text-align: right;
 }
 
@@ -454,7 +454,7 @@ async function handleSendRequest(endpoint, projectConfig) {
 .config-item textarea {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border);
   border-radius: 4px;
   box-sizing: border-box;
   font-size: 12px;
@@ -492,15 +492,15 @@ async function handleSendRequest(endpoint, projectConfig) {
 
 .tab-header {
   display: flex;
-  background: #f5f5f5;
-  border-bottom: 1px solid #ddd;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
 }
 
 .tab-item {
   padding: 10px 15px;
   cursor: pointer;
-  border-right: 1px solid #ddd;
+  border-right: 1px solid var(--border);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -508,11 +508,11 @@ async function handleSendRequest(endpoint, projectConfig) {
 }
 
 .tab-item:hover {
-  background: #e0e0e0;
+  background: var(--border);
 }
 
 .tab-item.active {
-  background: white;
+  background: var(--bg-secondary);
   border-bottom: 2px solid #42b883;
 }
 
@@ -537,7 +537,7 @@ async function handleSendRequest(endpoint, projectConfig) {
 .tab-content {
   flex: 1;
   overflow: auto;
-  background: white;
+  background: var(--bg-secondary);
 }
 
 .tab-pane {
@@ -556,7 +556,7 @@ async function handleSendRequest(endpoint, projectConfig) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--text-hint);
 }
 
 .empty-state h3 {

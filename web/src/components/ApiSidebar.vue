@@ -276,8 +276,8 @@ async function deleteEndpoint(endpoint) {
 <style scoped>
 .api-sidebar {
   width: 300px;
-  background: #f5f5f5;
-  border-right: 1px solid #ddd;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
   overflow-y: auto;
   padding: 15px;
 }
@@ -297,7 +297,7 @@ async function deleteEndpoint(endpoint) {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #333;
+  color: var(--text);
 }
 
 .add-btn {
@@ -343,7 +343,7 @@ async function deleteEndpoint(endpoint) {
 .project-list li:hover,
 .category-list li:hover,
 .endpoint-list li:hover {
-  background: #e0e0e0;
+  background: var(--border);
 }
 
 .project-list li.active,

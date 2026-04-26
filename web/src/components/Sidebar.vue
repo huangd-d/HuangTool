@@ -28,8 +28,8 @@
 .sidebar {
   width: 240px;
   height: 100vh;
-  background-color: #f5f5f5;
-  border-right: 1px solid #e0e0e0;
+  background-color: var(--bg-secondary);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 20px 0;
@@ -38,7 +38,7 @@
 
 .sidebar-header {
   padding: 0 20px 20px;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid var(--border);
   margin-bottom: 20px;
 }
 
@@ -46,7 +46,7 @@
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #333;
+  color: var(--text);
 }
 
 .sidebar-menu {
@@ -65,8 +65,8 @@
 }
 
 .menu-item:hover {
-  background-color: #e3f2fd;
-  color: #1976d2;
+  background-color: rgba(255, 144, 0, 0.15);
+  color: var(--accent);
 }
 
 .menu-icon {
