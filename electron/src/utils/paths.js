@@ -12,3 +12,9 @@ export function getDocsPath() {
     ? path.join(process.resourcesPath, 'docs')
     : path.join(app.getAppPath(), 'docs')
 }
+
+export function getWebDistPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'web-dist')
+    : path.join(app.getAppPath(), 'web-dist')
+}

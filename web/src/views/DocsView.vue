@@ -42,7 +42,7 @@
               class="tab-pane"
               :class="{ active: activeTabId === tab.id }"
             >
-              <webview :src="`app://${tab.doc}`" class="doc-viewer"></webview>
+              <webview :src="`docs://${tab.doc}`" class="doc-viewer"></webview>
             </div>
           </template>
           <div v-else class="preview-placeholder">

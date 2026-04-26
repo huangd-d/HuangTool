@@ -36,13 +36,15 @@ export function createTab(title, tabPath, bounds) {
       preload: path.join(app.getAppPath(), 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      webSecurity: true,
       webviewTag: true,
-      partition: `persist:tab-${tabId}`,
     }
   });
 
   // 加载页面（添加 tab 参数：无头部栏，有内容区）
-  const url = getAppURL(`${tabPath}?tab=true`);
+  // const routePath = app.isPackaged ? `/web-dist${tabPath}` : tabPath
+  const url = getAppURL(`${tabPath}`);
+  console.log('url----', url);
   view.webContents.loadURL(url).catch(err => {
     console.error(`加载页面失败 [${tabId}]:`, err);
   });
