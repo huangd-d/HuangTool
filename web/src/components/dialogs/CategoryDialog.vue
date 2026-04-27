@@ -73,7 +73,13 @@ function handleSave() {
     return
   }
   
-  emit('save', { ...form.value, id: props.category?.id })
+  emit('save', {
+    id: props.category?.id,
+    name: form.value.name,
+    description: form.value.description,
+    type: 'category',
+    config: {}
+  })
   close()
 }
 </script>
@@ -93,21 +99,33 @@ function handleSave() {
 }
 
 .dialog {
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 20px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 0;
   width: 400px;
   max-width: 90%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
 }
 
 .dialog h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: var(--text);
+  margin: 0;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: #1B1B1B;
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
 }
 
 .dialog-content {
-  margin-bottom: 20px;
+  padding: 20px 24px;
+  margin-bottom: 0;
+  min-height: 120px;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .form-item {
@@ -119,17 +137,19 @@ function handleSave() {
   margin-bottom: 5px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
 }
 
 .form-item input,
 .form-item textarea {
   width: 100%;
   padding: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   border-radius: 4px;
   box-sizing: border-box;
   font-size: 12px;
+  background: #FFFFFF;
+  color: var(--content-text);
 }
 
 .form-item textarea {
@@ -141,24 +161,36 @@ function handleSave() {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--content-border);
+  flex-shrink: 0;
 }
 
 .dialog-actions button {
-  padding: 8px 16px;
-  border: 1px solid var(--border);
+  padding: 8px 20px;
+  border: 1px solid var(--content-border);
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+  font-weight: 600;
+  color: var(--content-text-secondary);
+  background: #FFFFFF;
+  transition: all 0.2s;
+}
+
+.dialog-actions button:hover {
+  border-color: #999;
 }
 
 .dialog-actions button.primary {
-  background: #42b883;
-  color: white;
-  border-color: #42b883;
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+  font-weight: 700;
 }
 
 .dialog-actions button.primary:hover {
-  background: #35495e;
-  border-color: #35495e;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 </style>

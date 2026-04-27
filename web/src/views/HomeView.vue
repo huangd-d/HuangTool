@@ -7,8 +7,8 @@ const features = menuItems.filter(item => item.id !== 'home')
 // 导航到功能页面，通过 IPC 通知主进程
 const handleFeatureClick = (feature) => {
     if (window.electronAPI) {
-      const {icon, ...other} = feature;
-        window.electronAPI.navigateTo(other)
+      const { icon, ...other } = feature
+      window.electronAPI.navigateTo(JSON.parse(JSON.stringify(other)))
     }
 }
 </script>
@@ -43,7 +43,7 @@ const handleFeatureClick = (feature) => {
   justify-content: center;
   height: 100%;
   padding: 2rem;
-  background-color: var(--bg-secondary);
+  background-color: var(--content-bg);
 }
 
 .hero-section {
@@ -60,7 +60,7 @@ const handleFeatureClick = (feature) => {
 
 .hero-section p {
   font-size: 1.2rem;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
 }
 
 .features-grid {
@@ -72,19 +72,19 @@ const handleFeatureClick = (feature) => {
 }
 
 .feature-card {
-  background-color: var(--bg);
+  background-color: var(--content-bg-card);
   border-radius: 12px;
   padding: 2rem;
   text-align: center;
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   cursor: pointer;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
 }
 
 .feature-card:hover {
   transform: translateY(-5px);
-  box-shadow: var(--shadow-hover);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   border-color: var(--accent);
 }
 
@@ -95,13 +95,13 @@ const handleFeatureClick = (feature) => {
 
 .feature-title {
   font-size: 1.5rem;
-  color: var(--text);
+  color: var(--content-text);
   margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .feature-description {
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
   font-size: 1rem;
 }
 

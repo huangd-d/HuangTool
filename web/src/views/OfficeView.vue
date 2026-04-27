@@ -156,12 +156,12 @@ onUnmounted(() => {
   gap: 1px;
   flex: 1;
   overflow: hidden;
-  background-color: var(--border);
+  background-color: var(--content-border);
 }
 
 /* 左侧文件选择 */
 .file-selector {
-  background: var(--bg);
+  background: var(--content-bg-card);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -169,19 +169,20 @@ onUnmounted(() => {
 
 .selector-header {
   padding: 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--content-border);
+  background: #1B1B1B;
 }
 
 .selector-header h3 {
   margin: 0;
   font-size: 16px;
-  font-weight: 500;
-  color: var(--text);
+  font-weight: 700;
+  color: #FFFFFF;
 }
 
 .select-button {
   padding: 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--content-border);
 }
 
 .select-button input[type="file"] {
@@ -191,13 +192,13 @@ onUnmounted(() => {
 .select-button button {
   width: 100%;
   padding: 10px 16px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border);
+  background-color: var(--accent);
+  border: none;
   border-radius: 4px;
-  color: var(--accent);
+  color: #FFFFFF;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -205,8 +206,7 @@ onUnmounted(() => {
 }
 
 .select-button button:hover {
-  background-color: rgba(255, 144, 0, 0.15);
-  border-color: var(--accent);
+  background-color: var(--accent-hover);
 }
 
 .recent-files {
@@ -219,7 +219,7 @@ onUnmounted(() => {
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
 }
 
 .recent-files ul {
@@ -233,19 +233,19 @@ onUnmounted(() => {
   border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--text);
+  color: var(--content-text);
   transition: background-color 0.2s ease;
   margin-bottom: 4px;
 }
 
 .recent-files li:hover {
-  background-color: var(--bg-secondary);
+  background-color: var(--content-bg);
   color: var(--accent);
 }
 
 /* 右侧预览区域 */
 .document-preview {
-  background: var(--bg);
+  background: var(--content-bg-card);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -254,8 +254,8 @@ onUnmounted(() => {
 /* Tab 头部 */
 .tab-header {
   display: flex;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  background: var(--content-bg-card);
+  border-bottom: 1px solid var(--content-border);
   overflow-x: auto;
   min-height: 48px;
   align-items: center;
@@ -268,18 +268,18 @@ onUnmounted(() => {
   height: 48px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--text-secondary);
-  border-right: 1px solid var(--border);
+  color: var(--content-text-secondary);
+  border-right: 1px solid var(--content-border);
   white-space: nowrap;
   transition: all 0.2s ease;
 }
 
 .tab-item:hover {
-  background-color: var(--bg-tertiary);
+  background-color: var(--content-bg);
 }
 
 .tab-item.active {
-  background-color: var(--bg);
+  background-color: var(--content-bg-card);
   color: var(--accent);
   border-bottom: 2px solid var(--accent);
 }
@@ -295,14 +295,14 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
   margin-left: 8px;
   transition: all 0.2s ease;
 }
 
 .tab-close:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--text);
+  background-color: rgba(255, 59, 48, 0.15);
+  color: #ff3b30;
 }
 
 /* Tab 内容 */
@@ -327,7 +327,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-hint);
+  color: var(--content-text-hint);
   font-size: 14px;
 }
 
@@ -336,7 +336,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
   font-size: 14px;
 }
 
@@ -354,13 +354,13 @@ onUnmounted(() => {
 .jit-viewer {
   width: 100%;
   height: 100%;
-  background-color: var(--bg-secondary);
+  background-color: var(--content-bg);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
   font-size: 14px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   border-radius: 4px;
 }
 

@@ -11,7 +11,7 @@ export function createTab(menu) {
     if (menu && window.electronAPI) {
         const mainEl = document.getElementById('main');
         if (!mainEl) return;
-        
+
         const rect = mainEl.getBoundingClientRect();
         const bounds = {
             x: rect.left,
@@ -19,6 +19,6 @@ export function createTab(menu) {
             width: rect.width,
             height: rect.height
         };
-        window.electronAPI.createTab(menu.title, menu.path, bounds);
+        window.electronAPI.createTab(menu.title, menu.path, JSON.parse(JSON.stringify(bounds)));
     }
 }

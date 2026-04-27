@@ -129,12 +129,12 @@ onMounted(() => {
   gap: 1px;
   flex: 1;
   overflow: hidden;
-  background-color: var(--border);
+  background-color: var(--content-border);
 }
 
 /* 左侧文档列表 */
 .docs-sidebar {
-  background: var(--bg);
+  background: var(--content-bg-card);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -142,14 +142,15 @@ onMounted(() => {
 
 .sidebar-header {
   padding: 16px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--content-border);
+  background: #1B1B1B;
 }
 
 .sidebar-header h3 {
   margin: 0;
   font-size: 16px;
-  font-weight: 500;
-  color: var(--text);
+  font-weight: 700;
+  color: #FFFFFF;
 }
 
 .docs-sidebar ul {
@@ -162,31 +163,31 @@ onMounted(() => {
 
 .docs-sidebar li {
   margin: 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--content-border);
 }
 
 .doc-item {
   width: 100%;
   padding: 12px 16px;
   border: none;
-  background: var(--bg);
+  background: var(--content-bg-card);
   text-align: left;
   cursor: pointer;
   font-size: 14px;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  color: var(--text);
+  color: var(--content-text);
 }
 
 .doc-item:hover {
-  background-color: var(--bg-secondary);
+  background-color: var(--content-bg);
   color: var(--accent);
 }
 
 /* 右侧预览区域 */
 .docs-preview {
-  background: var(--bg);
+  background: var(--content-bg-card);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -195,8 +196,8 @@ onMounted(() => {
 /* Tab 头部 */
 .tab-header {
   display: flex;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  background: var(--content-bg-card);
+  border-bottom: 1px solid var(--content-border);
   overflow-x: auto;
   min-height: 48px;
   align-items: center;
@@ -209,18 +210,18 @@ onMounted(() => {
   height: 48px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--text-secondary);
-  border-right: 1px solid var(--border);
+  color: var(--content-text-secondary);
+  border-right: 1px solid var(--content-border);
   white-space: nowrap;
   transition: all 0.2s ease;
 }
 
 .tab-item:hover {
-  background-color: var(--bg-tertiary);
+  background-color: var(--content-bg);
 }
 
 .tab-item.active {
-  background-color: var(--bg);
+  background-color: var(--content-bg-card);
   color: var(--accent);
   border-bottom: 2px solid var(--accent);
 }
@@ -236,14 +237,14 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
   margin-left: 8px;
   transition: all 0.2s ease;
 }
 
 .tab-close:hover {
-  background-color: rgba(255, 144, 0, 0.15);
-  color: var(--text);
+  background-color: rgba(255, 59, 48, 0.15);
+  color: #ff3b30;
 }
 
 /* Tab 内容 */
@@ -267,7 +268,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-hint);
+  color: var(--content-text-hint);
   font-size: 14px;
 }
 

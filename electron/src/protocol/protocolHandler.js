@@ -1,4 +1,5 @@
 import { app, protocol } from 'electron'
+
 import fs from 'fs'
 import path from 'path'
 import { getDocsPath, getSwaggerPath, getWebDistPath } from '../utils/paths.js'
@@ -108,6 +109,9 @@ export function handleProtocol() {
 
     let baseDir
     if (hostname === 'web-dist') {
+      if (!app.isPackaged) {
+        return new Response('Dev mode: use http://localhost:5173', { status: 404 })
+      }
       baseDir = getWebDistPath()
     } else if (hostname === 'swagger') {
       baseDir = getSwaggerPath()

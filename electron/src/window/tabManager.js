@@ -59,6 +59,11 @@ export function createTab(title, tabPath, bounds) {
   // 存储 WebContentsView 实例
   views.set(tabId, { id: tabId, title, path: tabPath, view });
 
+  view.webContents.openDevTools({
+    mode: 'detach',
+    activate: true
+  })
+
   // 切换到新页签
   switchTab(tabId, viewBounds);
 

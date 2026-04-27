@@ -22,6 +22,14 @@
   --warning: #F29900;
   --error: #D93025;
 
+  /* ---- 浅色内容区 ---- */
+  --content-bg: #F5F5F7;
+  --content-bg-card: #FFFFFF;
+  --content-border: #E5E5E5;
+  --content-text: #1B1B1B;
+  --content-text-secondary: #6E6E73;
+  --content-text-hint: #AEAEB2;
+
   --shadow: none;
   --shadow-hover: none;
 
@@ -141,18 +149,18 @@ input::placeholder, textarea::placeholder {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: var(--content-bg);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #444444;
+  background: #C7C7CC;
   border-radius: 3px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #666666;
+  background: #999;
 }
 
 /* 过渡动画 */

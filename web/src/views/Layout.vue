@@ -115,7 +115,7 @@ onMounted(() => {
 .main {
     grid-area: main;
     overflow: auto;
-    background-color: var(--bg-secondary);
+    background-color: var(--content-bg);
     height: 100%;
 }
 

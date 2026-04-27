@@ -5,23 +5,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDocsDirectories: () => ipcRenderer.invoke('get-docs-directories'),
   // API 请求
   sendApiRequest: (options) => ipcRenderer.invoke('send-api-request', options),
-  getFullEndpoint: (projectName, categoryId, endpointId) => 
-    ipcRenderer.invoke('get-full-endpoint', projectName, categoryId, endpointId),
+  getFullEndpoint: (fileName, categoryId, endpointId) =>
+    ipcRenderer.invoke('get-full-endpoint', fileName, categoryId, endpointId),
   // API 项目管理
   getApiProjects: () => ipcRenderer.invoke('get-api-projects'),
   createApiProject: (project) => ipcRenderer.invoke('create-api-project', project),
   updateApiProject: (project) => ipcRenderer.invoke('update-api-project', project),
-  deleteApiProject: (projectName) => ipcRenderer.invoke('delete-api-project', projectName),
-  // API 分类管理
-  getApiCategories: (projectName) => ipcRenderer.invoke('get-api-categories', projectName),
-  createApiCategory: (projectName, category) => ipcRenderer.invoke('create-api-category', projectName, category),
-  updateApiCategory: (projectName, category) => ipcRenderer.invoke('update-api-category', projectName, category),
-  deleteApiCategory: (projectName, categoryId) => ipcRenderer.invoke('delete-api-category', projectName, categoryId),
+  deleteApiProject: (fileName) => ipcRenderer.invoke('delete-api-project', fileName),
+  // API 分类管理 (fileName 为完整文件名，如 "example-project.json")
+  getApiCategories: (fileName) => ipcRenderer.invoke('get-api-categories', fileName),
+  createApiCategory: (fileName, category) => ipcRenderer.invoke('create-api-category', fileName, category),
+  updateApiCategory: (fileName, category) => ipcRenderer.invoke('update-api-category', fileName, category),
+  deleteApiCategory: (fileName, categoryId) => ipcRenderer.invoke('delete-api-category', fileName, categoryId),
   // API 接口管理
-  getApiEndpoints: (projectName, categoryId) => ipcRenderer.invoke('get-api-endpoints', projectName, categoryId),
-  createApiEndpoint: (projectName, categoryId, endpoint) => ipcRenderer.invoke('create-api-endpoint', projectName, categoryId, endpoint),
-  updateApiEndpoint: (projectName, categoryId, endpoint) => ipcRenderer.invoke('update-api-endpoint', projectName, categoryId, endpoint),
-  deleteApiEndpoint: (projectName, categoryId, endpointId) => ipcRenderer.invoke('delete-api-endpoint', projectName, categoryId, endpointId),
+  getApiEndpoints: (fileName, categoryId) => ipcRenderer.invoke('get-api-endpoints', fileName, categoryId),
+  createApiEndpoint: (fileName, categoryId, endpoint) => ipcRenderer.invoke('create-api-endpoint', fileName, categoryId, endpoint),
+  updateApiEndpoint: (fileName, categoryId, endpoint) => ipcRenderer.invoke('update-api-endpoint', fileName, categoryId, endpoint),
+  deleteApiEndpoint: (fileName, categoryId, endpointId) => ipcRenderer.invoke('delete-api-endpoint', fileName, categoryId, endpointId),
   // 窗口控制
   minimizeWindow: () => ipcRenderer.send('minimize-window'),
   maximizeWindow: () => ipcRenderer.send('maximize-window'),

@@ -9,7 +9,7 @@
         </div>
         <div class="form-item">
           <label>项目文件名:</label>
-          <input v-model="form.fileName" type="text" placeholder="请输入数字、字母、下划线，不能包含中文">
+          <input v-model="form.config.fileName" type="text" placeholder="请输入数字、字母、下划线，不能包含中文">
         </div>
         <div class="form-item">
           <label>项目描述:</label>
@@ -58,9 +58,9 @@ const emit = defineEmits(['update:modelValue', 'save'])
 
 const form = ref({
   name: '',
-  fileName: '',
   description: '',
   config: {
+    fileName: '',
     baseUrl: '',
     proxy: '',
     headers: {},
@@ -95,12 +95,20 @@ function getCurrentTimeString() {
   return `${year}${month}${day}_${hours}${minutes}${seconds}`
 }
 
+// 去掉 .json 后缀用于表单显示
+function stripJsonExtension(fileName) {
+  if (!fileName) return ''
+  return fileName.endsWith('.json') ? fileName.slice(0, -5) : fileName
+}
+
 // 监听 project 变化，更新表单
 watch(() => props.project, (newProject) => {
   if (newProject) {
     form.value = {
-      ...newProject,
+      name: newProject.name || '',
+      description: newProject.description || '',
       config: {
+        fileName: stripJsonExtension(newProject.config?.fileName || ''),
         baseUrl: newProject.config?.baseUrl || '',
         proxy: newProject.config?.proxy || '',
         headers: newProject.config?.headers || {},
@@ -115,9 +123,9 @@ watch(() => props.project, (newProject) => {
 function resetForm() {
   form.value = {
     name: '',
-    fileName: getCurrentTimeString(),
     description: '',
     config: {
+      fileName: getCurrentTimeString(),
       baseUrl: '',
       proxy: '',
       headers: {},
@@ -132,17 +140,29 @@ function close() {
 }
 
 function handleSave() {
-  if (!form.value.name || !form.value.fileName) {
+  if (!form.value.name || !form.value.config.fileName) {
     alert('请输入项目名称和文件名')
     return
   }
   // 数字、字母、下划线，不能包含中文
-  if (!form.value.fileName.match(/^[a-zA-Z0-9][a-zA-Z0-9_]+$/)) {
+  if (!form.value.config.fileName.match(/^[a-zA-Z0-9][a-zA-Z0-9_]+$/)) {
     alert('请输入正确的文件名格式')
     return
   }
-  
-  emit('save', { ...form.value})
+
+  emit('save', {
+    id: props.project?.id,
+    name: form.value.name,
+    description: form.value.description,
+    type: 'project',
+    config: {
+      fileName: form.value.config.fileName,
+      baseUrl: form.value.config.baseUrl,
+      proxy: form.value.config.proxy,
+      headers: form.value.config.headers,
+      timeout: form.value.config.timeout
+    }
+  })
   close()
 }
 </script>
@@ -162,23 +182,34 @@ function handleSave() {
 }
 
 .dialog {
-  background: var(--bg-secondary);
-  border-radius: 8px;
-  padding: 20px;
+  background: #FFFFFF;
+  border-radius: 12px;
+  padding: 0;
   width: 500px;
   max-width: 90%;
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
 }
 
 .dialog h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-  color: var(--text);
+  margin: 0;
+  padding: 16px 24px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  background: #1B1B1B;
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
 }
 
 .dialog-content {
-  margin-bottom: 20px;
+  padding: 20px 24px;
+  margin-bottom: 0;
+  min-height: 200px;
+  max-height: 60vh;
+  overflow-y: auto;
 }
 
 .form-item {
@@ -190,7 +221,7 @@ function handleSave() {
   margin-bottom: 5px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
 }
 
 .form-item input,
@@ -198,10 +229,12 @@ function handleSave() {
 .form-item textarea {
   width: 100%;
   padding: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   border-radius: 4px;
   box-sizing: border-box;
   font-size: 12px;
+  background: #FFFFFF;
+  color: var(--content-text);
 }
 
 .form-item textarea {
@@ -214,24 +247,36 @@ function handleSave() {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--content-border);
+  flex-shrink: 0;
 }
 
 .dialog-actions button {
-  padding: 8px 16px;
-  border: 1px solid var(--border);
+  padding: 8px 20px;
+  border: 1px solid var(--content-border);
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+  font-weight: 600;
+  color: var(--content-text-secondary);
+  background: #FFFFFF;
+  transition: all 0.2s;
+}
+
+.dialog-actions button:hover {
+  border-color: #999;
 }
 
 .dialog-actions button.primary {
-  background: #42b883;
-  color: white;
-  border-color: #42b883;
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+  font-weight: 700;
 }
 
 .dialog-actions button.primary:hover {
-  background: #35495e;
-  border-color: #35495e;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 </style>

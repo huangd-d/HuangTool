@@ -2,14 +2,14 @@
   <div class="endpoint-view">
     <!-- 顶部请求栏 -->
     <div class="request-bar">
-      <select v-model="endpoint.method" class="method-select" :class="endpoint.method.toLowerCase()">
+      <select v-model="endpoint.config.method" class="method-select" :class="endpoint.config.method?.toLowerCase()">
         <option value="GET">GET</option>
         <option value="POST">POST</option>
         <option value="PUT">PUT</option>
         <option value="DELETE">DELETE</option>
         <option value="PATCH">PATCH</option>
       </select>
-      <input v-model="endpoint.url" type="text" class="url-input" placeholder="输入请求 URL" />
+      <input v-model="endpoint.config.url" type="text" class="url-input" placeholder="输入请求 URL" />
       <button @click="sendRequest" class="send-btn" :disabled="loading">
         {{ loading ? '发送中...' : 'Send' }}
       </button>
@@ -216,7 +216,7 @@ const props = defineProps({
 })
 
 // Emits
-const emit = defineEmits(['send-request'])
+const emit = defineEmits([])
 
 // 状态
 const activeTabId = ref('params')
@@ -251,8 +251,10 @@ const responseType = ref('json')
 // Header 列表（转换为数组形式）
 const headerList = ref([])
 
-// 初始化 headerList
+// 初始化 headerList（仅首次，避免循环）
+let headerListInitialized = false
 watch(() => props.endpoint.config?.headers, (newHeaders) => {
+  if (headerListInitialized) return
   if (newHeaders && typeof newHeaders === 'object') {
     headerList.value = Object.entries(newHeaders).map(([key, value]) => ({
       key,
@@ -262,7 +264,20 @@ watch(() => props.endpoint.config?.headers, (newHeaders) => {
   } else {
     headerList.value = []
   }
+  headerListInitialized = true
 }, { deep: true, immediate: true })
+
+// headerList 变更时写回 config.headers
+watch(headerList, (newList) => {
+  if (!props.endpoint.config) return
+  const headers = {}
+  newList.forEach(h => {
+    if (h.key && h.enabled) {
+      headers[h.key] = h.value
+    }
+  })
+  props.endpoint.config.headers = headers
+}, { deep: true })
 
 // 计算属性
 const formattedResponse = computed(() => {
@@ -359,8 +374,8 @@ async function sendRequest() {
 
     const options = {
       baseUrl: props.projectConfig.baseUrl || '',
-      url: props.endpoint.url,
-      method: props.endpoint.method,
+      url: props.endpoint.config.url,
+      method: props.endpoint.config.method,
       headers: headers,
       params: props.endpoint.config.params || [],
       body: props.endpoint.config.body || '',
@@ -382,9 +397,6 @@ async function sendRequest() {
     } else {
       throw new Error('API 不可用')
     }
-
-    // 触发发送请求事件
-    emit('send-request', props.endpoint, props.projectConfig)
   } catch (error) {
     console.log('error--web', error);
     
@@ -439,7 +451,7 @@ function copyResponse() {
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--bg-secondary);
+  background: var(--content-bg);
 }
 
 /* 顶部请求栏 */
@@ -447,21 +459,22 @@ function copyResponse() {
   display: flex;
   gap: 10px;
   padding: 15px 20px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  background: var(--content-bg-card);
+  border-bottom: 1px solid var(--content-border);
   align-items: center;
 }
 
 .method-select {
   padding: 8px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   border-radius: 6px;
-  background: var(--bg-tertiary);
+  background: #FFFFFF;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   min-width: 100px;
   transition: all 0.2s;
+  color: var(--content-text);
 }
 
 .method-select:hover {
@@ -491,11 +504,13 @@ function copyResponse() {
 .url-input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   border-radius: 6px;
   font-size: 13px;
   font-family: 'SF Mono', 'Courier New', monospace;
   transition: all 0.2s;
+  background: #FFFFFF;
+  color: var(--content-text);
 }
 
 .url-input:focus {
@@ -507,11 +522,11 @@ function copyResponse() {
 .send-btn {
   padding: 8px 24px;
   background: var(--accent);
-  color: #000000;
+  color: #FFFFFF;
   border: none;
   border-radius: 6px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -530,7 +545,7 @@ function copyResponse() {
   flex: 1;
   display: flex;
   gap: 1px;
-  background: var(--border);
+  background: var(--content-border);
   overflow: hidden;
 }
 
@@ -539,15 +554,15 @@ function copyResponse() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--bg-secondary);
+  background: var(--content-bg-card);
   overflow: hidden;
 }
 
 /* 标签页头部 */
 .tabs-header {
   display: flex;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  background: var(--content-bg-card);
+  border-bottom: 1px solid var(--content-border);
 }
 
 .tab-item {
@@ -555,20 +570,20 @@ function copyResponse() {
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
 }
 
 .tab-item:hover {
   color: var(--accent);
-  background: var(--bg-tertiary);
+  background: var(--content-bg);
 }
 
 .tab-item.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
-  background: var(--bg-secondary);
+  background: var(--content-bg-card);
 }
 
 /* 标签内容 */
@@ -584,9 +599,9 @@ function copyResponse() {
 
 /* 参数表格 */
 .param-table {
-  background: var(--bg-secondary);
+  background: var(--content-bg-card);
   border-radius: 8px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   overflow: hidden;
 }
 
@@ -595,11 +610,11 @@ function copyResponse() {
   grid-template-columns: 40px 1fr 1fr 50px;
   gap: 10px;
   padding: 10px 15px;
-  background: var(--bg-secondary);
+  background: var(--content-bg);
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border);
+  color: var(--content-text-secondary);
+  border-bottom: 1px solid var(--content-border);
 }
 
 .table-row {
@@ -607,7 +622,7 @@ function copyResponse() {
   grid-template-columns: 40px 1fr 1fr 50px;
   gap: 10px;
   padding: 8px 15px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--content-border);
   align-items: center;
 }
 
@@ -618,10 +633,12 @@ function copyResponse() {
 .table-row input[type="text"] {
   width: 100%;
   padding: 6px 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   border-radius: 4px;
   font-size: 12px;
   transition: all 0.2s;
+  background: #FFFFFF;
+  color: var(--content-text);
 }
 
 .table-row input[type="text"]:focus {
@@ -644,14 +661,14 @@ function copyResponse() {
 
 .add-row {
   padding: 12px 15px;
-  background: var(--bg-secondary);
+  background: var(--content-bg-card);
 }
 
 .add-btn {
   width: 100%;
   padding: 8px;
   background: transparent;
-  border: 1px dashed var(--border);
+  border: 1px dashed var(--content-border);
   border-radius: 4px;
   color: var(--accent);
   font-size: 12px;
@@ -687,7 +704,7 @@ function copyResponse() {
   gap: 15px;
   margin-bottom: 15px;
   padding: 10px;
-  background: var(--bg-secondary);
+  background: var(--content-bg-card);
   border-radius: 6px;
 }
 
@@ -696,7 +713,7 @@ function copyResponse() {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
   cursor: pointer;
 }
 
@@ -712,13 +729,15 @@ function copyResponse() {
   width: 100%;
   min-height: 300px;
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   border-radius: 6px;
   font-family: 'SF Mono', 'Courier New', monospace;
   font-size: 12px;
   line-height: 1.5;
   resize: vertical;
   transition: all 0.2s;
+  background: #FFFFFF;
+  color: var(--content-text);
 }
 
 .body-textarea:focus {
@@ -735,18 +754,19 @@ function copyResponse() {
 
 .action-btn {
   padding: 6px 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
+  background: #1B1B1B;
+  border: none;
   border-radius: 4px;
   font-size: 12px;
+  color: #FFFFFF;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .action-btn:hover {
-  background: var(--bg-tertiary);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--accent);
+  color: #FFFFFF;
 }
 
 /* Authorization */
@@ -757,10 +777,11 @@ function copyResponse() {
 .auth-selector select {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   border-radius: 6px;
   font-size: 13px;
-  background: var(--bg-secondary);
+  background: #FFFFFF;
+  color: var(--content-text);
   cursor: pointer;
 }
 
@@ -775,16 +796,18 @@ function copyResponse() {
   margin-bottom: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
 }
 
 .form-item input {
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--content-border);
   border-radius: 6px;
   font-size: 13px;
   transition: all 0.2s;
+  background: #FFFFFF;
+  color: var(--content-text);
 }
 
 .form-item input:focus {
@@ -798,8 +821,8 @@ function copyResponse() {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: var(--bg-secondary);
-  border-left: 1px solid var(--border);
+  background: var(--content-bg-card);
+  border-left: 1px solid var(--content-border);
   overflow: hidden;
 }
 
@@ -808,8 +831,8 @@ function copyResponse() {
   justify-content: space-between;
   align-items: center;
   padding: 12px 15px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  background: var(--content-bg-card);
+  border-bottom: 1px solid var(--content-border);
 }
 
 .status-info {
@@ -844,7 +867,7 @@ function copyResponse() {
 
 .status-text {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
 }
 
 .response-meta {
@@ -855,14 +878,14 @@ function copyResponse() {
 
 .meta-item {
   font-size: 12px;
-  color: var(--text-hint);
+  color: var(--content-text-hint);
   font-family: 'SF Mono', 'Courier New', monospace;
 }
 
 .response-tabs {
   display: flex;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
+  background: var(--content-bg-card);
+  border-bottom: 1px solid var(--content-border);
 }
 
 .response-tab {
@@ -870,7 +893,7 @@ function copyResponse() {
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
 }
@@ -882,7 +905,7 @@ function copyResponse() {
 .response-tab.active {
   color: var(--accent);
   border-bottom-color: var(--accent);
-  background: var(--bg-secondary);
+  background: var(--content-bg-card);
 }
 
 .response-content {
@@ -898,7 +921,7 @@ function copyResponse() {
   line-height: 1.5;
   white-space: pre-wrap;
   word-wrap: break-word;
-  color: var(--text);
+  color: var(--content-text);
 }
 
 .response-headers {
@@ -911,7 +934,7 @@ function copyResponse() {
   display: flex;
   gap: 8px;
   padding: 8px;
-  background: var(--bg-secondary);
+  background: var(--content-bg);
   border-radius: 4px;
   font-size: 12px;
 }
@@ -923,7 +946,7 @@ function copyResponse() {
 }
 
 .header-value {
-  color: var(--text-secondary);
+  color: var(--content-text-secondary);
   font-family: 'SF Mono', 'Courier New', monospace;
   word-break: break-all;
 }
@@ -934,7 +957,7 @@ function copyResponse() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-hint);
+  color: var(--content-text-hint);
   font-size: 13px;
 }
 </style>

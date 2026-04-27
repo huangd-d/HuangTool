@@ -44,12 +44,12 @@ export function createWindow() {
   shellView.setBounds({ x: 0, y: 0, width: mainWindowBounds.width, height: mainWindowBounds.height })
 
   // 仅开发模式打开 DevTools
-  if (!app.isPackaged) {
-    shellView.webContents.openDevTools({
-      mode: 'detach',
-      activate: true
-    })
-  }
+  // if (!app.isPackaged) {
+  //   shellView.webContents.openDevTools({
+  //     mode: 'detach',
+  //     activate: true
+  //   })
+  // }
 
   // 处理资源清理
   mainWindow.on('closed', () => {

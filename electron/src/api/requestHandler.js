@@ -183,6 +183,8 @@ export async function sendRequest(options) {
 export function mergeConfigs(projectConfig, endpointConfig) {
   const merged = {
     baseUrl: projectConfig?.baseUrl || '',
+    url: endpointConfig?.url || '',
+    method: endpointConfig?.method || 'GET',
     proxy: endpointConfig?.proxy || projectConfig?.proxy || '',
     timeout: endpointConfig?.timeout || projectConfig?.timeout || 30000,
     headers: {
