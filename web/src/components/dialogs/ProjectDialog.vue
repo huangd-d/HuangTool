@@ -101,22 +101,25 @@ function stripJsonExtension(fileName) {
   return fileName.endsWith('.json') ? fileName.slice(0, -5) : fileName
 }
 
-// 监听 project 变化，更新表单
-watch(() => props.project, (newProject) => {
-  if (newProject) {
-    form.value = {
-      name: newProject.name || '',
-      description: newProject.description || '',
-      config: {
-        fileName: stripJsonExtension(newProject.config?.fileName || ''),
-        baseUrl: newProject.config?.baseUrl || '',
-        proxy: newProject.config?.proxy || '',
-        headers: newProject.config?.headers || {},
-        timeout: newProject.config?.timeout || 30000
+// 监听对话框打开和 project 变化，更新表单
+watch([() => props.modelValue, () => props.project], ([visible, project]) => {
+  if (visible) {
+    if (project) {
+      const raw = JSON.parse(JSON.stringify(project))
+      form.value = {
+        name: raw.name || '',
+        description: raw.description || '',
+        config: {
+          fileName: stripJsonExtension(raw.config?.fileName || ''),
+          baseUrl: raw.config?.baseUrl || '',
+          proxy: raw.config?.proxy || '',
+          headers: raw.config?.headers || {},
+          timeout: raw.config?.timeout || 30000
+        }
       }
+    } else {
+      resetForm()
     }
-  } else {
-    resetForm()
   }
 }, { immediate: true })
 
@@ -126,9 +129,9 @@ function resetForm() {
     description: '',
     config: {
       fileName: getCurrentTimeString(),
-      baseUrl: '',
+      baseUrl: 'https://jsonplaceholder.typicode.com',
       proxy: '',
-      headers: {},
+      headers: { 'Content-Type': 'application/json' },
       timeout: 30000
     }
   }

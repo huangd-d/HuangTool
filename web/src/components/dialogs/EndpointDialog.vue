@@ -84,25 +84,28 @@ const form = ref({
 
 const isEdit = computed(() => !!props.endpoint)
 
-// 监听 endpoint 变化，更新表单
-watch(() => props.endpoint, (newEndpoint) => {
-  if (newEndpoint) {
-    form.value = {
-      name: newEndpoint.name || '',
-      description: newEndpoint.description || '',
-      config: {
-        url: newEndpoint.config?.url || '',
-        method: newEndpoint.config?.method || 'GET',
-        headers: newEndpoint.config?.headers || {},
-        params: newEndpoint.config?.params || [],
-        bodyType: newEndpoint.config?.bodyType || 'none',
-        body: newEndpoint.config?.body || '',
-        timeout: newEndpoint.config?.timeout || 30000,
-        followRedirect: newEndpoint.config?.followRedirect !== false
+// 监听对话框打开和 endpoint 变化，更新表单
+watch([() => props.modelValue, () => props.endpoint], ([visible, endpoint]) => {
+  if (visible) {
+    if (endpoint) {
+      const raw = JSON.parse(JSON.stringify(endpoint))
+      form.value = {
+        name: raw.name || '',
+        description: raw.description || '',
+        config: {
+          url: raw.config?.url || '',
+          method: raw.config?.method || 'GET',
+          headers: raw.config?.headers || {},
+          params: raw.config?.params || [],
+          bodyType: raw.config?.bodyType || 'none',
+          body: raw.config?.body || '',
+          timeout: raw.config?.timeout || 30000,
+          followRedirect: raw.config?.followRedirect !== false
+        }
       }
+    } else {
+      resetForm()
     }
-  } else {
-    resetForm()
   }
 }, { immediate: true })
 

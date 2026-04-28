@@ -43,15 +43,17 @@ const form = ref({
 
 const isEdit = computed(() => !!props.category)
 
-// 监听 category 变化，更新表单
-watch(() => props.category, (newCategory) => {
-  if (newCategory) {
-    form.value = {
-      name: newCategory.name || '',
-      description: newCategory.description || ''
+// 监听对话框打开和 category 变化，更新表单
+watch([() => props.modelValue, () => props.category], ([visible, category]) => {
+  if (visible) {
+    if (category) {
+      form.value = {
+        name: category.name || '',
+        description: category.description || ''
+      }
+    } else {
+      resetForm()
     }
-  } else {
-    resetForm()
   }
 }, { immediate: true })
 

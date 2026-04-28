@@ -1,8 +1,5 @@
 <template>
   <div class="config-panel">
-    <div class="config-header">
-      <h3>{{ project.name }} - 通用配置</h3>
-    </div>
     <div class="config-content">
       <div class="config-item">
         <label>基础 URL:</label>
@@ -65,6 +62,7 @@ function handleSave() {
   emit('save', {
     ...props.project,
     config: {
+      ...props.project.config,
       baseUrl: form.baseUrl,
       proxy: form.proxy,
       timeout: form.timeout,
@@ -76,31 +74,13 @@ function handleSave() {
 
 <style scoped>
 .config-panel {
-  background: var(--content-bg-card);
-  border-bottom: 1px solid var(--content-border);
-  padding: 10px 15px;
-}
-
-.config-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 15px;
-  border-radius: 8px 8px 0 0;
-  background-color: #1B1B1B;
-}
-
-.config-header h3 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #FFFFFF;
+  background: var(--content-bg);
+  padding: 0;
 }
 
 .config-content {
   padding: 15px;
   background-color: var(--content-bg);
-  border-radius: 0 0 8px 8px;
 }
 
 .config-item {

@@ -1,0 +1,45 @@
+{
+  "id": "1777394196648",
+  "name": "示例项目2222",
+  "description": "示例项目2222",
+  "type": "project",
+  "config": {
+    "fileName": "20260429_003625.json",
+    "baseUrl": "https://jsonplaceholder.typicode.com",
+    "proxy": "",
+    "headers": {
+      "Content-type": "application/json"
+    },
+    "timeout": 30000
+  },
+  "children": [
+    {
+      "id": "1777394209035",
+      "name": "测试分类1",
+      "description": "测试分类1",
+      "type": "category",
+      "config": {},
+      "children": [
+        {
+          "id": "1777394230893",
+          "name": "测试接口",
+          "description": "测试接口",
+          "type": "endpoint",
+          "config": {
+            "url": "/users",
+            "method": "GET",
+            "headers": {},
+            "params": [],
+            "bodyType": "none",
+            "body": "",
+            "timeout": 30000,
+            "followRedirect": true,
+            "tests": [],
+            "examples": []
+          },
+          "children": []
+        }
+      ]
+    }
+  ]
+}

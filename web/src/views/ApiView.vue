@@ -5,35 +5,50 @@
       ref="apiTreeRef"
       @select-project="handleSelectProject"
       @select-endpoint="handleSelectEndpoint"
+      @data-updated="handleDataUpdated"
     />
 
     <!-- 右侧内容 -->
     <div class="api-content">
-      <!-- 项目通用配置 -->
-      <ProjectConfig
-        v-if="selectedProject && !hasActiveTab"
-        :project="selectedProject"
-        @save="handleSaveConfig"
-      />
+      <template v-if="selectedProject">
+        <!-- 通用配置（可折叠） -->
+        <div class="section project-config-section">
+          <div class="section-header" @click="configExpanded = !configExpanded">
+            <span class="section-title">{{ selectedProject.name }} - 通用配置</span>
+            <span class="collapse-icon" :class="{ expanded: configExpanded }">▶</span>
+          </div>
+          <div v-show="configExpanded" class="section-body">
+            <ProjectConfig
+              :project="selectedProject"
+              @save="handleSaveConfig"
+            />
+          </div>
+        </div>
 
-      <!-- Tab 容器 -->
-      <div class="tab-container" v-if="tabs.length > 0">
-        <div class="tab-header">
-          <div v-for="tab in tabs" :key="tab.id" class="tab-item" :class="{ active: activeTabId === tab.id }">
-            <span v-if="tab.method" class="tab-method" :class="tab.method.toLowerCase()">{{ tab.method }}</span>
-            <span @click="switchTab(tab.id)" class="tab-name">{{ tab.name }}</span>
-            <button @click="closeTab(tab.id)" class="tab-close">×</button>
+        <!-- Tab 容器 -->
+        <div class="tab-container" v-if="tabs.length > 0">
+          <div class="tab-header">
+            <div v-for="tab in tabs" :key="tab.id" class="tab-item" :class="{ active: activeTabId === tab.id }">
+              <span v-if="tab.method" class="tab-method" :class="tab.method.toLowerCase()">{{ tab.method }}</span>
+              <span @click="switchTab(tab.id)" class="tab-name">{{ tab.name }}</span>
+              <button @click="closeTab(tab.id)" class="tab-close">×</button>
+            </div>
+          </div>
+          <div class="tab-content">
+            <div v-for="tab in tabs" :key="tab.id" class="tab-pane" :class="{ active: activeTabId === tab.id }">
+              <EndpointView :endpoint="tab.endpoint" :project-config="tab.projectConfig" />
+            </div>
           </div>
         </div>
-        <div class="tab-content">
-          <div v-for="tab in tabs" :key="tab.id" class="tab-pane" :class="{ active: activeTabId === tab.id }">
-            <EndpointView :endpoint="tab.endpoint" :project-config="tab.projectConfig" />
-          </div>
+
+        <!-- 空状态：已选项目但无 tab -->
+        <div class="empty-state-subtle" v-if="tabs.length === 0">
+          <p>点击左侧接口查看详情</p>
         </div>
-      </div>
+      </template>
 
       <!-- 空状态 -->
-      <div class="empty-state" v-if="!selectedProject && tabs.length === 0">
+      <div class="empty-state" v-if="!selectedProject">
         <h3>请选择或创建项目</h3>
         <p>从左侧列表中选择项目或创建新项目</p>
       </div>
@@ -49,16 +64,15 @@ import ProjectConfig from '../components/ProjectConfig.vue'
 
 const apiTreeRef = ref(null)
 const selectedProject = ref(null)
+const configExpanded = ref(false)
 const tabs = ref([])
 const activeTabId = ref(null)
-
-const hasActiveTab = computed(() => tabs.value.length > 0 && activeTabId.value)
 
 // 处理项目选择
 function handleSelectProject(project) {
   selectedProject.value = project
+  configExpanded.value = false
   if (!project) {
-    // 项目被删除，关闭相关 tab
     tabs.value = []
     activeTabId.value = null
   }
@@ -66,9 +80,9 @@ function handleSelectProject(project) {
 
 // 处理接口选择
 function handleSelectEndpoint({ endpoint, projectConfig }) {
-  // 更新当前项目
-  if (!selectedProject.value || selectedProject.value.id !== projectConfig.id) {
-    selectedProject.value = apiTreeRef.value?.currentProjectNode || null
+  const project = apiTreeRef.value?.currentProjectNode
+  if (project && (!selectedProject.value || selectedProject.value.id !== project.id)) {
+    selectedProject.value = project
   }
 
   // 检查是否已存在该接口的 tab
@@ -81,10 +95,21 @@ function handleSelectEndpoint({ endpoint, projectConfig }) {
       name: endpoint.name,
       method: endpoint.config?.method,
       endpoint: endpoint,
-      projectConfig: projectConfig
+      projectConfig: selectedProject.value?.config || projectConfig
     }
     tabs.value.push(newTab)
     activeTabId.value = newTab.id
+  }
+}
+
+// 数据更新后刷新右侧项目数据
+function handleDataUpdated(updatedProject) {
+  if (updatedProject && selectedProject.value && selectedProject.value.id === updatedProject.id) {
+    selectedProject.value = updatedProject
+    // 同步 tab 中的 projectConfig
+    tabs.value.forEach(tab => {
+      tab.projectConfig = updatedProject.config
+    })
   }
 }
 
@@ -93,7 +118,6 @@ async function handleSaveConfig(projectData) {
   try {
     const payload = JSON.parse(JSON.stringify(projectData))
     await window.electronAPI.updateApiProject(payload)
-    selectedProject.value = payload
     alert('配置已保存')
     await apiTreeRef.value?.loadProjects()
   } catch (error) {
@@ -133,6 +157,49 @@ function closeTab(tabId) {
   background: var(--content-bg);
 }
 
+/* 通用配置区 */
+.project-config-section {
+  border-bottom: 1px solid var(--content-border);
+  flex-shrink: 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--content-bg-card);
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--content-border);
+  transition: background 0.15s;
+}
+
+.section-header:hover {
+  background: var(--content-bg);
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--content-text);
+}
+
+.collapse-icon {
+  font-size: 10px;
+  color: var(--content-text-hint);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.collapse-icon.expanded {
+  transform: rotate(90deg);
+}
+
+.section-body {
+  padding: 0;
+}
+
 /* Tab 容器 */
 .tab-container {
   flex: 1;
@@ -146,6 +213,7 @@ function closeTab(tabId) {
   background: var(--content-bg-card);
   border-bottom: 1px solid var(--content-border);
   overflow-x: auto;
+  flex-shrink: 0;
 }
 
 .tab-item {
@@ -221,6 +289,16 @@ function closeTab(tabId) {
 
 .tab-pane.active {
   display: block;
+}
+
+/* 轻量空状态 */
+.empty-state-subtle {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--content-text-hint);
+  font-size: 13px;
 }
 
 /* 空状态 */

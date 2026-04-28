@@ -121,9 +121,9 @@ export function registerApiHandlers() {
         type: 'project',
         config: {
           fileName,
-          baseUrl: project.config?.baseUrl || '',
+          baseUrl: project.config?.baseUrl || 'https://jsonplaceholder.typicode.com',
           proxy: project.config?.proxy || '',
-          headers: project.config?.headers || {},
+          headers: project.config?.headers || { 'Content-Type': 'application/json' },
           timeout: project.config?.timeout || 30000
         },
         children: []
@@ -366,9 +366,15 @@ export function registerApiHandlers() {
       if (category) {
         const endpointIndex = (category.children || []).findIndex(e => e.id === endpoint.id)
         if (endpointIndex !== -1) {
+          const existingEndpoint = category.children[endpointIndex]
           category.children[endpointIndex] = {
+            ...existingEndpoint,
             ...endpoint,
-            type: endpoint.type || 'endpoint'
+            type: endpoint.type || 'endpoint',
+            config: {
+              ...existingEndpoint.config,
+              ...endpoint.config
+            }
           }
           await fs.promises.writeFile(filePath, JSON.stringify(project, null, 2))
         }

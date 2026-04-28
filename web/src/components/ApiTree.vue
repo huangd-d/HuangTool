@@ -58,12 +58,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import ProjectDialog from './dialogs/ProjectDialog.vue'
 import CategoryDialog from './dialogs/CategoryDialog.vue'
 import EndpointDialog from './dialogs/EndpointDialog.vue'
 
-const emit = defineEmits(['select-project', 'select-endpoint'])
+const emit = defineEmits(['select-project', 'select-endpoint', 'select-category', 'data-updated'])
 
 // 树结构
 const treeRef = ref(null)
@@ -88,6 +88,9 @@ const editingEndpoint = ref(null)
 const targetProjectFileName = ref('')
 const targetCategoryId = ref('')
 
+// 操作后需要展开的节点 ID
+const pendingExpandIds = ref([])
+
 // 当前选中的项目（供接口点击时获取 projectConfig）
 const currentProjectNode = ref(null)
 
@@ -97,10 +100,31 @@ async function loadProjects() {
     try {
       const projects = await window.electronAPI.getApiProjects()
       treeData.value = projects
-      // 默认展开第一个项目节点
-      if (projects.length > 0) {
+
+      // 应用待展开节点
+      if (pendingExpandIds.value.length > 0) {
+        const newKeys = [...expandedKeys.value]
+        for (const id of pendingExpandIds.value) {
+          if (!newKeys.includes(id)) {
+            newKeys.push(id)
+          }
+        }
+        expandedKeys.value = newKeys
+        pendingExpandIds.value = []
+      }
+
+      // 首次加载时默认展开第一个项目
+      if (expandedKeys.value.length === 0 && projects.length > 0) {
         expandedKeys.value = [projects[0].id]
       }
+
+      // 刷新当前项目引用
+      if (currentProjectNode.value) {
+        const updated = projects.find(p => p.id === currentProjectNode.value.id)
+        currentProjectNode.value = updated || null
+      }
+
+      emit('data-updated', currentProjectNode.value)
     } catch (error) {
       console.error('Error loading projects:', error)
     }
@@ -114,18 +138,13 @@ defineExpose({ loadProjects, currentProjectNode })
 function handleNodeClick(data) {
   if (data.type === 'project') {
     currentProjectNode.value = data
-    // 展开项目节点
-    // const node = treeRef.value?.store?.getNode(data.id)
-    // if (node && !node.expanded) {
-    //   node.expanded = true
-    // }
     emit('select-project', data)
   } else if (data.type === 'category') {
-    // 找到父级项目
     const project = findParentProject(data.id)
     if (project) {
       currentProjectNode.value = project
     }
+    emit('select-category', { category: data, project })
   } else if (data.type === 'endpoint') {
     const project = findParentProject(data.id)
     if (project) {
@@ -174,13 +193,19 @@ function openCreateProject() {
 
 async function handleSaveProject(data) {
   try {
-    const payload = JSON.parse(JSON.stringify(data))
+    let payload = JSON.parse(JSON.stringify(data))
     if (payload.id) {
-      // 编辑：附带旧 fileName 用于重命名检测
-      const oldProject = treeData.value.find(p => p.id === payload.id)
-      if (oldProject) {
-        payload._oldFileName = oldProject.config?.fileName
+      // 编辑：与原始数据合并，保留 children 等字段
+      const original = treeData.value.find(p => p.id === payload.id)
+      if (original) {
+        payload = {
+          ...JSON.parse(JSON.stringify(original)),
+          ...payload,
+          config: { ...JSON.parse(JSON.stringify(original.config)), ...payload.config }
+        }
+        payload._oldFileName = original.config?.fileName
       }
+      pendingExpandIds.value = [payload.id]
       await window.electronAPI.updateApiProject(payload)
     } else {
       await window.electronAPI.createApiProject(payload)
@@ -197,7 +222,6 @@ async function handleDeleteProject(data) {
   try {
     await window.electronAPI.deleteApiProject(data.config.fileName)
     await loadProjects()
-    // 通知父组件项目已删除
     emit('select-project', null)
   } catch (error) {
     console.error('Error deleting project:', error)
@@ -215,14 +239,27 @@ function openCreateCategory(projectNode) {
 
 async function handleSaveCategory(data) {
   try {
-    const payload = JSON.parse(JSON.stringify(data))
+    let payload = JSON.parse(JSON.stringify(data))
     if (payload.id) {
-      // 编辑
+      // 编辑：与原始数据合并，保留 children
       const project = findParentProject(payload.id)
-      const fileName = project?.config?.fileName
-      await window.electronAPI.updateApiCategory(fileName, payload)
+      if (project) {
+        const original = (project.children || []).find(c => c.id === payload.id)
+        if (original) {
+          payload = {
+            ...JSON.parse(JSON.stringify(original)),
+            ...payload,
+            config: { ...JSON.parse(JSON.stringify(original.config)), ...payload.config }
+          }
+        }
+        pendingExpandIds.value = [project.id]
+        const fileName = project.config?.fileName
+        await window.electronAPI.updateApiCategory(fileName, payload)
+      }
     } else {
-      // 创建
+      // 新建：展开到父项目
+      const project = treeData.value.find(p => p.config.fileName === targetProjectFileName.value)
+      if (project) pendingExpandIds.value = [project.id]
       await window.electronAPI.createApiCategory(targetProjectFileName.value, payload)
     }
     await loadProjects()
@@ -236,6 +273,7 @@ async function handleDeleteCategory(data) {
   if (!confirm(`确定删除分类 "${data.name}" 吗？`)) return
   try {
     const project = findParentProject(data.id)
+    if (project) pendingExpandIds.value = [project.id]
     const fileName = project?.config?.fileName
     await window.electronAPI.deleteApiCategory(fileName, data.id)
     await loadProjects()
@@ -257,16 +295,29 @@ function openCreateEndpoint(categoryNode) {
 
 async function handleSaveEndpoint(data) {
   try {
-    const payload = JSON.parse(JSON.stringify(data))
+    let payload = JSON.parse(JSON.stringify(data))
     if (payload.id) {
-      // 编辑
+      // 编辑：与原始数据合并，保留 tests、examples 等字段
       const category = findParentCategory(payload.id)
       const project = findParentProject(payload.id)
+      if (category) {
+        const original = (category.children || []).find(e => e.id === payload.id)
+        if (original) {
+          payload = {
+            ...JSON.parse(JSON.stringify(original)),
+            ...payload,
+            config: { ...JSON.parse(JSON.stringify(original.config)), ...payload.config }
+          }
+        }
+      }
+      pendingExpandIds.value = [project?.id, category?.id].filter(Boolean)
       const fileName = project?.config?.fileName
       const categoryId = category?.id
       await window.electronAPI.updateApiEndpoint(fileName, categoryId, payload)
     } else {
-      // 创建
+      // 新建：展开到父分类和项目
+      const project = treeData.value.find(p => p.config.fileName === targetProjectFileName.value)
+      pendingExpandIds.value = [project?.id, targetCategoryId.value].filter(Boolean)
       await window.electronAPI.createApiEndpoint(targetProjectFileName.value, targetCategoryId.value, payload)
     }
     await loadProjects()
@@ -281,6 +332,7 @@ async function handleDeleteEndpoint(data) {
   try {
     const category = findParentCategory(data.id)
     const project = findParentProject(data.id)
+    pendingExpandIds.value = [project?.id, category?.id].filter(Boolean)
     const fileName = project?.config?.fileName
     const categoryId = category?.id
     await window.electronAPI.deleteApiEndpoint(fileName, categoryId, data.id)
