@@ -27,6 +27,11 @@ const router = createRouter({
       path: '/docs',
       name: 'Docs',
       component: () => import('../views/DocsView.vue')
+    },
+    {
+      path: '/mysql',
+      name: 'Mysql',
+      component: () => import('../views/MysqlView.vue')
     }
   ]
 })

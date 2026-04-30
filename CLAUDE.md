@@ -1,6 +1,6 @@
 # HTool - 综合工具平台
 
-基于 Electron + Vue 3 的内网前端工具箱桌面应用，提供 API 管理、技术文档预览、Office 文档预览三大模块。
+基于 Electron + Vue 3 的内网前端工具箱桌面应用，提供 API 管理、技术文档预览、Office 文档预览、数据库管理四大模块。
 
 ## 技术栈
 
@@ -8,7 +8,8 @@
 - **Vue 3** + **Vue Router 5** (history 模式) + **Element Plus 2**
 - **Vite 8** (构建工具)
 - **node-fetch** + **proxy-agent** (API 请求与代理)
-- 纯 JavaScript 项目，无 TypeScript / ESLint 配置
+- **mysql2** (MySQL 数据库连接)
+- **jit-viewer** (Office 文档渲染)
 
 ## 项目结构
 
@@ -22,7 +23,10 @@ electron/                    # Electron 主进程
 │   ├── api/
 │   │   ├── apiHandler.js    # IPC 处理：项目/分类/接口 CRUD + 请求
 │   │   ├── docsHandler.js   # IPC 处理：docs 目录列表
-│   │   └── requestHandler.js # HTTP 请求引擎 (node-fetch + ProxyAgent)
+│   │   ├── requestHandler.js # HTTP 请求引擎 (node-fetch + ProxyAgent)
+│   │   ├── mysqlConnection.js # MySQL 逻辑层（纯 mysql2/promise，无 Electron 依赖）
+│   │   ├── mysqlHandler.js  # IPC 处理：MySQL 连接/库/表/查询
+│   │   └── mysqlConfig.js   # MySQL 连接配置持久化（swagger/mysql-connections.json）
 │   ├── protocol/
 │   │   └── protocolHandler.js # 自定义 app:// + docs:// 协议（前端应用 + 文档站点 + swagger）
 │   └── window/
@@ -45,17 +49,25 @@ web/                         # Vue 3 前端
 │   ├── config/
 │   │   └── menuConfig.js    # 菜单定义 + createTab 辅助函数
 │   ├── router/
-│   │   └── index.js         # 路由：/ /home /api /docs /office
+│   │   └── index.js         # 路由：/ /home /api /docs /office /mysql
 │   ├── views/
 │   │   ├── Layout.vue       # 壳布局：Header + Sidebar(60px图标) + Main
 │   │   ├── HomeView.vue     # 首页：功能卡片入口
 │   │   ├── ApiView.vue      # API管理：el-tree + 端点编辑器
 │   │   ├── DocsView.vue     # 技术文档：目录列表 + webview(docs://协议)
-│   │   └── OfficeView.vue   # Office预览：文件选择 + jit-viewer
+│   │   ├── OfficeView.vue   # Office预览：文件选择 + jit-viewer
+│   │   └── MysqlView.vue    # 数据库管理：左侧树 + 右侧SQL面板
 │   └── components/
 │       ├── WindowControls.vue   # 最小/最大化/关闭按钮
 │       ├── EndpointView.vue     # 接口请求/响应 UI（Postman 风格）
-│       └── dialogs/             # 项目/分类/接口 新建编辑对话框
+│       ├── MysqlTree.vue        # 数据库三级树（连接→库→表）
+│       ├── SqlPanel.vue         # SQL 编辑器 + 查询结果表格
+│       └── dialogs/             # 对话框组件
+│           ├── ProjectDialog / CategoryDialog / EndpointDialog  # API 管理
+│           ├── ConnectionDialog      # 数据库连接（含类型选择+测试连接）
+│           ├── CreateDatabaseDialog  # 创建数据库（名称+字符集+排序规则）
+│           ├── CreateTableDialog     # 创建表（表名+列编辑器）
+│           └── TableStructureDialog  # 查看表结构 + 添加列
 ├── vite.config.js           # 条件base + outDir + webview + 路径别名配置
 └── package.json             # 前端依赖
 
@@ -71,7 +83,7 @@ package.json                 # 根目录构建编排脚本
 3. **切换机制**：非活动标签页 bounds 设为 `{width:0, height:0}` 隐藏，活动标签页占满主区域
 4. **跨视图通信**：渲染进程 → `ipcMain` → 壳视图 `webContents.send()`，实现导航和状态同步
 
-## 三大功能模块
+## 四大功能模块
 
 ### 1. API 管理（类似 Postman）
 - 三级层级：**项目 → 分类 → 接口**
@@ -95,6 +107,14 @@ package.json                 # 根目录构建编排脚本
 - 配置：暗黑主题 + 中文 locale + 内置工具栏
 - 文件选择 + 最近文件列表 + 多标签页预览（每个 tab 独立 `createViewer` 实例）
 
+### 4. 数据库管理
+- 三级树结构：**连接 → 数据库 → 表**
+- 连接配置持久化到 `electron/swagger/mysql-connections.json`，支持 `type` 字段（mysql/postgres/sqlite）兼容多类型
+- 连接弹框含数据库类型选择器和测试连接按钮
+- 树节点 hover 操作：连接节点（连接/断开/建库/编辑/删除）、库节点（建表/删库/刷新）、表节点（查看结构/删表）
+- 表结构弹框展示 DESCRIBE 结果 + 添加列功能
+- 右侧 SqlPanel：SQL 编辑器（Ctrl+Enter 执行）+ 结果表格
+
 ## IPC 通信接口 (preload.js → window.electronAPI)
 
 | 类别 | 方法 |
@@ -108,6 +128,10 @@ package.json                 # 根目录构建编排脚本
 | API接口 | `getApiEndpoints()`, `createApiEndpoint()`, `updateApiEndpoint()`, `deleteApiEndpoint()` |
 | API请求 | `sendApiRequest()`, `getFullEndpoint()` |
 | 文档 | `getDocsDirectories()` |
+| MySQL连接 | `mysqlConnect()`, `mysqlDisconnect()`, `mysqlTestConnection()`, `mysqlGetConnections()`, `mysqlGetSavedConnections()`, `mysqlSaveConnection()`, `mysqlDeleteSavedConnection()` |
+| MySQL库 | `mysqlListDatabases()`, `mysqlCreateDatabase()`, `mysqlDropDatabase()` |
+| MySQL表 | `mysqlListTables()`, `mysqlCreateTable()`, `mysqlDropTable()`, `mysqlGetTableStructure()`, `mysqlAlterTableAddColumn()` |
+| MySQL查询 | `mysqlExecuteQuery()` |
 
 ## 开发与构建命令
 
@@ -141,7 +165,7 @@ npm run build:linux      # 构建 Linux 安装包
 
 ## 关键约定
 
-- **无数据库**：API 数据全部使用 JSON 文件存储在 `electron/swagger/`
+- **无数据库**：API 数据使用 JSON 文件存储在 `electron/swagger/`；数据库模块的连接配置也存于此目录（`mysql-connections.json`）
 - **文档不入 Git**：`electron/docs/*` 已在 `.gitignore` 中排除，文档站点为外部导入
 - **frameless 窗口**：自定义标题栏，`-webkit-app-region: drag` 实现拖拽
 - **webview 标签**：Vite 配置中将 `<webview>` 标记为自定义元素，避免 Vue 编译

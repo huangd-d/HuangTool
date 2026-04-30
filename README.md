@@ -1,6 +1,6 @@
 # HTool - 综合工具平台
 
-基于 Electron + Vue 3 的内网前端工具箱桌面应用，提供 API 管理、技术文档预览、Office 文档预览三大模块。
+基于 Electron + Vue 3 的内网前端工具箱桌面应用，提供 API 管理、技术文档预览、Office 文档预览、数据库管理四大模块。
 
 ## 技术栈
 
@@ -8,6 +8,8 @@
 - **Vue 3** + **Vue Router 5** (history 模式) + **Element Plus 2**
 - **Vite 8** (构建工具)
 - **node-fetch** + **proxy-agent** (API 请求与代理)
+- **mysql2** (MySQL 数据库连接)
+- **jit-viewer** (Office 文档渲染)
 - **jit-viewer** (Office 文档渲染)
 - 纯 JavaScript 项目，无 TypeScript / ESLint 配置
 
@@ -68,6 +70,13 @@ web/                         # Vue 3 前端
 - 支持 PDF、Office（.docx/.xlsx/.pptx 等）、OFD、Markdown、图片、视频、CAD、3D 模型等格式
 - 使用 `jit-viewer` SDK 渲染，内置工具栏（缩放、翻页、打印、下载等）
 - 多标签页预览
+
+### 4. 数据库管理
+- 三级树结构：连接 → 数据库 → 表
+- 支持 MySQL 连接（兼容 postgres/sqlite 类型扩展）
+- 连接弹框含数据库类型选择器和测试连接按钮
+- 数据库/表 CRUD：创建库、创建表、删除库/表、查看表结构、添加列
+- SQL 编辑器 + 查询结果展示
 
 ## 安装和运行
 

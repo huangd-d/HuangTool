@@ -1,10 +1,11 @@
-import { HomeFilled, Document, Memo, Files } from '@element-plus/icons-vue'
+import { HomeFilled, Document, Memo, Files, Coin } from '@element-plus/icons-vue'
 
 export const menuItems = [
     { id: 'home', title: '首页', icon: HomeFilled, hIcon: '🏠', path: '/home', desc: '首页' },
     { id: 'api', title: 'API管理', icon: Document, hIcon: '🔧', path: '/api', desc: 'API管理' },
     { id: 'docs', title: '技术文档访问', icon: Memo, hIcon: '📄', path: '/docs', desc: '技术文档访问' },
-    { id: 'office', title: '办公文件预览', icon: Files, hIcon: '📁', path: '/office', desc: '办公文件预览' }
+    { id: 'office', title: '办公文件预览', icon: Files, hIcon: '📁', path: '/office', desc: '办公文件预览' },
+    { id: 'mysql', title: '数据库', icon: Coin, hIcon: '🗄', path: '/mysql', desc: '数据库管理' }
 ]
 
 export function createTab(menu) {
