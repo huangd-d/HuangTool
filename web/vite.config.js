@@ -10,7 +10,7 @@ export default defineConfig(({ command }) => ({
   resolve: {
     alias: {
       '@': '/src',
-      'components': '/src/components',
+
       'views': '/src/views',
       'config': '/src/config',
     },

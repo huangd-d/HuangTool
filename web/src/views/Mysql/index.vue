@@ -28,8 +28,8 @@
 
 <script setup>
 import { ref } from 'vue'
-import MysqlTree from '../components/MysqlTree.vue'
-import SqlPanel from '../components/SqlPanel.vue'
+import MysqlTree from './components/MysqlTree.vue'
+import SqlPanel from './components/SqlPanel.vue'
 
 const mysqlTreeRef = ref(null)
 const sqlPanelRef = ref(null)

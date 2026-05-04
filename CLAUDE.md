@@ -51,26 +51,33 @@ web/                         # Vue 3 前端
 │   │   └── menuConfig.js    # 菜单定义 + createTab 辅助函数
 │   ├── router/
 │   │   └── index.js         # 路由：/ /home /api /docs /office /mysql
-│   ├── views/
-│   │   ├── Layout.vue       # 壳布局：Header水平菜单 + Main
-│   │   ├── HomeView.vue     # 首页：功能卡片入口
-│   │   ├── ApiView.vue      # API管理：el-tree + 端点编辑器
-│   │   ├── DocsView.vue     # 技术文档：目录列表 + webview(docs://协议)
-│   │   ├── OfficeView.vue   # Office预览：文件选择 + jit-viewer
-│   │   └── MysqlView.vue    # 数据库管理：左侧树 + 右侧SQL面板
-│   └── components/
-│       ├── WindowControls.vue   # 最小/最大化/关闭按钮
-│       ├── ApiTree.vue          # API 项目/分类/接口三级树（el-dropdown 操作菜单）
-│       ├── EndpointView.vue     # 接口请求/响应 UI（Postman 风格）
-│       ├── ProjectConfig.vue    # API 项目配置组件
-│       ├── MysqlTree.vue        # 数据库三级树（连接→库→表，el-dropdown 操作菜单）
-│       ├── SqlPanel.vue         # SQL 编辑器 + 查询结果表格
-│       └── dialogs/             # 对话框组件
-│           ├── ProjectDialog / CategoryDialog / EndpointDialog  # API 管理
-│           ├── ConnectionDialog      # 数据库连接（含类型选择+测试连接）
-│           ├── CreateDatabaseDialog  # 创建数据库（名称+字符集+排序规则）
-│           ├── CreateTableDialog     # 创建表（表名+列编辑器）
-│           └── TableStructureDialog  # 查看表结构 + 添加列
+│   └── views/
+│       ├── Layout/              # 壳布局模块
+│       │   ├── index.vue        # Header水平菜单 + Main
+│       │   └── components/
+│       │       └── WindowControls.vue  # 最小/最大化/关闭按钮
+│       ├── Home/
+│       │   └── index.vue        # 首页：功能卡片入口
+│       ├── Api/                 # API管理模块
+│       │   ├── index.vue        # 主视图：el-tree + 端点编辑器
+│       │   └── components/
+│       │       ├── ApiTree.vue          # 项目/分类/接口三级树（el-dropdown）
+│       │       ├── EndpointView.vue     # 接口请求/响应 UI
+│       │       ├── ProjectConfig.vue    # 项目配置
+│       │       └── dialogs/
+│       │           ├── ProjectDialog / CategoryDialog / EndpointDialog
+│       ├── Docs/
+│       │   └── index.vue        # 技术文档：目录列表 + webview
+│       ├── Office/
+│       │   └── index.vue        # Office预览：文件选择 + jit-viewer
+│       └── Mysql/               # 数据库管理模块
+│           ├── index.vue        # 主视图：左侧树 + 右侧SQL面板
+│           └── components/
+│               ├── MysqlTree.vue        # 三级树（连接→库→表，el-dropdown）
+│               ├── SqlPanel.vue         # SQL编辑器 + 结果表格
+│               └── dialogs/
+│                   ├── ConnectionDialog / CreateDatabaseDialog
+│                   ├── CreateTableDialog / TableStructureDialog
 ├── vite.config.js           # 条件base + outDir + webview + 路径别名配置
 └── package.json             # 前端依赖
 
@@ -115,7 +122,7 @@ package.json                 # 根目录构建编排脚本
 - 三级树结构：**连接 → 数据库 → 表**
 - 连接配置持久化到 `electron/mysql/mysql-connections.json`，支持 `type` 字段（mysql/postgres/sqlite）兼容多类型
 - 连接弹框含数据库类型选择器和测试连接按钮
-- 树节点 hover 显示 `⋮` 图标，点击展开 el-dropdown 下拉菜单：连接节点（连接/断开/建库/编辑/删除）、库节点（建表/删库/刷新）、表节点（查看结构/删表）
+- 树节点 hover 显示常用操作图标 + `⋮` 下拉菜单：连接节点（连接/断开图标 + 下拉：建库/编辑/删除）、库节点（刷新图标 + 下拉：建表/删库）、表节点（下拉：查看结构/删表）
 - 表结构弹框展示 DESCRIBE 结果 + 添加列功能
 - 右侧 SqlPanel：SQL 编辑器（Ctrl+Enter 执行）+ 结果表格
 
@@ -173,7 +180,7 @@ npm run build:linux      # 构建 Linux 安装包
 - **文档不入 Git**：`electron/docs/*` 已在 `.gitignore` 中排除，文档站点为外部导入
 - **frameless 窗口**：自定义标题栏，`-webkit-app-region: drag` 实现拖拽
 - **webview 标签**：Vite 配置中将 `<webview>` 标记为自定义元素，避免 Vue 编译
-- **路径别名**：Vite 配置 `@`→`/src`、`components`→`/src/components`、`views`→`/src/views`、`config`→`/src/config`
+- **路径别名**：Vite 配置 `@`→`/src`、`views`→`/src/views`、`config`→`/src/config`
 - **安全**：`contextIsolation: true`, `nodeIntegration: false`, app:// 及 docs:// 协议含路径遍历防护
 - **样式系统**：暗黑橙主题 CSS 变量（`--accent: #FF9000`，Arial 字体栈，13px 基础字号），滚动条统一为黑色轨道 + 橙色滑块（`--accent`）
 - **查看版本信息**：使用package.json 中的版本号

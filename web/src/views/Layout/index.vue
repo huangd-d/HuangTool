@@ -1,7 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import WindowControls from 'components/WindowControls.vue'
+import WindowControls from './components/WindowControls.vue'
 import { menuItems, createTab } from 'config/menuConfig.js'
 
 const router = useRouter()

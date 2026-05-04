@@ -28,6 +28,12 @@
             <span class="node-label">{{ data.name }}</span>
             <span v-if="data.type === 'table' && data.rowCount !== undefined" class="node-hint">{{ data.rowCount }}行</span>
             <span class="node-actions">
+              <!-- 连接节点：常用操作外置 -->
+              <span v-if="data.type === 'connection' && !activeConnectionIds.has(data.id)" class="action-btn connect-btn" @click.stop="handleConnect(data)" title="连接">▶</span>
+              <span v-if="data.type === 'connection' && activeConnectionIds.has(data.id)" class="action-btn disconnect-btn" @click.stop="handleDisconnect(data)" title="断开">■</span>
+              <!-- 数据库节点：刷新外置 -->
+              <span v-if="data.type === 'database'" class="action-btn refresh-btn" @click.stop="handleRefreshTables(data)" title="刷新表">↻</span>
+              <!-- 下拉菜单 -->
               <el-dropdown trigger="click" @command="(cmd) => handleAction(cmd, data)" @click.stop>
                 <span class="action-trigger">⋮</span>
                 <template #dropdown>
@@ -35,15 +41,12 @@
                     <!-- 连接节点 -->
                     <template v-if="data.type === 'connection'">
                       <el-dropdown-item v-if="activeConnectionIds.has(data.id)" command="createDatabase">新建数据库</el-dropdown-item>
-                      <el-dropdown-item v-if="!activeConnectionIds.has(data.id)" command="connect">连接</el-dropdown-item>
-                      <el-dropdown-item v-if="activeConnectionIds.has(data.id)" command="disconnect">断开</el-dropdown-item>
                       <el-dropdown-item command="editConnection">编辑</el-dropdown-item>
                       <el-dropdown-item command="deleteConnection" divided class="danger-item">删除</el-dropdown-item>
                     </template>
                     <!-- 数据库节点 -->
                     <template v-if="data.type === 'database'">
                       <el-dropdown-item command="createTable">新建表</el-dropdown-item>
-                      <el-dropdown-item command="refreshTables">刷新表</el-dropdown-item>
                       <el-dropdown-item command="dropDatabase" divided class="danger-item">删除数据库</el-dropdown-item>
                     </template>
                     <!-- 表节点 -->
@@ -137,12 +140,9 @@ const treeProps = { children: 'children', label: 'name' }
 function handleAction(command, data) {
   switch (command) {
     case 'createDatabase': handleCreateDatabase(data); break
-    case 'connect': handleConnect(data); break
-    case 'disconnect': handleDisconnect(data); break
     case 'editConnection': handleEditConnection(data); break
     case 'deleteConnection': handleDeleteConnection(data); break
     case 'createTable': handleCreateTable(data); break
-    case 'refreshTables': handleRefreshTables(data); break
     case 'dropDatabase': handleDropDatabase(data); break
     case 'viewStructure': handleViewTableStructure(data); break
     case 'dropTable': handleDropTable(data); break
@@ -562,6 +562,8 @@ defineExpose({ loadConnections, getRuntimeId, isConnected })
 
 .node-actions {
   display: none;
+  align-items: center;
+  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -587,6 +589,37 @@ defineExpose({ loadConnections, getRuntimeId, isConnected })
 .action-trigger:hover {
   color: var(--accent);
   background: rgba(255, 144, 0, 0.1);
+}
+
+.action-btn {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  color: var(--content-text-hint);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.action-btn:hover {
+  color: var(--accent);
+  background: rgba(255, 144, 0, 0.1);
+}
+
+.action-btn.disconnect-btn:hover {
+  color: var(--error);
+  background: rgba(217, 48, 37, 0.1);
+}
+
+.action-btn.connect-btn {
+  color: var(--accent);
+}
+
+.action-btn.refresh-btn {
+  font-size: 13px;
 }
 
 /* 下拉菜单暗黑主题 */

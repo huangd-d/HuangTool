@@ -58,9 +58,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import ApiTree from '../components/ApiTree.vue'
-import EndpointView from '../components/EndpointView.vue'
-import ProjectConfig from '../components/ProjectConfig.vue'
+import ApiTree from './components/ApiTree.vue'
+import EndpointView from './components/EndpointView.vue'
+import ProjectConfig from './components/ProjectConfig.vue'
 
 const apiTreeRef = ref(null)
 const selectedProject = ref(null)

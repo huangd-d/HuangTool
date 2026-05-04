@@ -50,8 +50,7 @@ web/                         # Vue 3 前端
 │   ├── style.css            # 暗黑橙主题 CSS 变量
 │   ├── config/menuConfig.js # 菜单定义 + createTab 辅助函数
 │   ├── router/index.js      # 路由：/ /home /api /docs /office /mysql
-│   ├── views/               # 页面视图
-│   └── components/          # 组件 + dialogs 对话框
+│   └── views/               # 按模块组织的页面视图（各含 index.vue + components/）
 ├── vite.config.js           # 条件 base + outDir + 路径别名
 └── package.json             # 前端依赖
 ```

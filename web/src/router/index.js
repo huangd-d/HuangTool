@@ -6,32 +6,32 @@ const router = createRouter({
     {
       path: '/',
       name: 'layout',
-      component: () => import('../views/Layout.vue')
+      component: () => import('../views/Layout/index.vue')
     },
     {
       path: '/home',
       name: 'home',
-      component: () => import('../views/HomeView.vue')
+      component: () => import('../views/Home/index.vue')
     },
     {
       path: '/api',
       name: 'Api',
-      component: () => import('../views/ApiView.vue')
+      component: () => import('../views/Api/index.vue')
     },
     {
       path: '/office',
       name: 'Office',
-      component: () => import('../views/OfficeView.vue')
+      component: () => import('../views/Office/index.vue')
     },
     {
       path: '/docs',
       name: 'Docs',
-      component: () => import('../views/DocsView.vue')
+      component: () => import('../views/Docs/index.vue')
     },
     {
       path: '/mysql',
       name: 'Mysql',
-      component: () => import('../views/MysqlView.vue')
+      component: () => import('../views/Mysql/index.vue')
     }
   ]
 })
