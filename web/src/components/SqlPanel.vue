@@ -305,17 +305,17 @@ defineExpose({ setSql, resetResult })
 
 .result-content::-webkit-scrollbar-track,
 .result-table-wrap::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: #000000;
 }
 
 .result-content::-webkit-scrollbar-thumb,
 .result-table-wrap::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
+  background: var(--accent);
   border-radius: 3px;
 }
 
 .result-content::-webkit-scrollbar-thumb:hover,
 .result-table-wrap::-webkit-scrollbar-thumb:hover {
-  background: #444444;
+  background: var(--accent-hover);
 }
 </style>

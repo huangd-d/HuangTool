@@ -25,10 +25,17 @@
           </span>
           <span class="node-label">{{ data.name }}</span>
           <span class="node-actions">
-            <button v-if="data.type === 'project'" @click.stop="openCreateCategory(data)" class="action-icon" title="新建分类">+</button>
-            <button v-if="data.type === 'category'" @click.stop="openCreateEndpoint(data)" class="action-icon" title="新建接口">+</button>
-            <button @click.stop="openEditNode(data)" class="action-icon edit-icon" title="编辑">✎</button>
-            <button @click.stop="handleDeleteNode(data)" class="action-icon delete-icon" title="删除">×</button>
+            <el-dropdown trigger="click" @command="(cmd) => handleAction(cmd, data)" @click.stop>
+              <span class="action-trigger">⋮</span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-if="data.type === 'project'" command="createCategory">新建分类</el-dropdown-item>
+                  <el-dropdown-item v-if="data.type === 'category'" command="createEndpoint">新建接口</el-dropdown-item>
+                  <el-dropdown-item command="edit">编辑</el-dropdown-item>
+                  <el-dropdown-item command="delete" divided class="danger-item">删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </span>
         </span>
       </template>
@@ -343,6 +350,17 @@ async function handleDeleteEndpoint(data) {
   }
 }
 
+// ===== 下拉菜单操作分发 =====
+
+function handleAction(command, data) {
+  switch (command) {
+    case 'createCategory': openCreateCategory(data); break
+    case 'createEndpoint': openCreateEndpoint(data); break
+    case 'edit': openEditNode(data); break
+    case 'delete': handleDeleteNode(data); break
+  }
+}
+
 // ===== 通用编辑/删除入口 =====
 
 function openEditNode(data) {
@@ -502,7 +520,6 @@ onMounted(() => {
 /* 悬停操作 */
 .node-actions {
   display: none;
-  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -510,46 +527,70 @@ onMounted(() => {
   display: flex;
 }
 
-.action-icon {
+.action-trigger {
   width: 20px;
   height: 20px;
-  border: none;
-  background: transparent;
-  color: var(--content-text-hint);
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 3px;
+  color: var(--content-text-hint);
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 1px;
   transition: all 0.2s;
 }
 
-.action-icon:hover {
-  background: var(--content-bg);
+.action-trigger:hover {
+  color: var(--accent);
+  background: rgba(255, 144, 0, 0.1);
+}
+
+/* 下拉菜单暗黑主题 */
+.api-tree :deep(.el-dropdown-menu) {
+  background: var(--content-bg-card);
+  border: 1px solid var(--content-border);
+  padding: 4px;
+}
+
+.api-tree :deep(.el-dropdown-menu__item) {
   color: var(--content-text);
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 3px;
 }
 
-.action-icon.delete-icon:hover {
-  background: #ff3b30;
-  color: white;
-}
-
-.action-icon.edit-icon:hover {
+.api-tree :deep(.el-dropdown-menu__item:hover) {
+  background: rgba(255, 144, 0, 0.1);
   color: var(--accent);
 }
 
-/* 浅色区域滚动条 */
+.api-tree :deep(.el-dropdown-menu__item.danger-item) {
+  color: #ff3b30;
+}
+
+.api-tree :deep(.el-dropdown-menu__item.danger-item:hover) {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+}
+
+.api-tree :deep(.el-dropdown-menu__item--divided:before) {
+  border-top-color: var(--content-border);
+  margin: 4px 0;
+}
+
+/* 滚动条 */
 .api-tree :deep(.el-tree)::-webkit-scrollbar-track {
-  background: var(--content-bg-card);
+  background: #000000;
 }
 
 .api-tree :deep(.el-tree)::-webkit-scrollbar-thumb {
-  background: #C7C7CC;
+  background: var(--accent);
   border-radius: 3px;
 }
 
 .api-tree :deep(.el-tree)::-webkit-scrollbar-thumb:hover {
-  background: #999;
+  background: var(--accent-hover);
 }
 </style>

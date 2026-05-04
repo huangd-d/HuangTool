@@ -28,25 +28,32 @@
             <span class="node-label">{{ data.name }}</span>
             <span v-if="data.type === 'table' && data.rowCount !== undefined" class="node-hint">{{ data.rowCount }}行</span>
             <span class="node-actions">
-              <!-- 连接节点 -->
-              <template v-if="data.type === 'connection'">
-                <button v-if="activeConnectionIds.has(data.id)" class="action-btn" @click.stop="handleCreateDatabase(data)" title="新建数据库">+</button>
-                <button v-if="!activeConnectionIds.has(data.id)" class="action-btn" @click.stop="handleConnect(data)" title="连接">▶</button>
-                <button v-else class="action-btn disconnect-btn" @click.stop="handleDisconnect(data)" title="断开">■</button>
-                <button class="action-btn" @click.stop="handleEditConnection(data)" title="编辑">✎</button>
-                <button class="action-btn delete-btn" @click.stop="handleDeleteConnection(data)" title="删除">✕</button>
-              </template>
-              <!-- 数据库节点 -->
-              <template v-if="data.type === 'database'">
-                <button class="action-btn" @click.stop="handleCreateTable(data)" title="新建表">+</button>
-                <button class="action-btn delete-btn" @click.stop="handleDropDatabase(data)" title="删除数据库">✕</button>
-                <button class="action-btn" @click.stop="handleRefreshTables(data)" title="刷新表">↻</button>
-              </template>
-              <!-- 表节点 -->
-              <template v-if="data.type === 'table'">
-                <button class="action-btn" @click.stop="handleViewTableStructure(data)" title="查看结构">☰</button>
-                <button class="action-btn delete-btn" @click.stop="handleDropTable(data)" title="删除表">✕</button>
-              </template>
+              <el-dropdown trigger="click" @command="(cmd) => handleAction(cmd, data)" @click.stop>
+                <span class="action-trigger">⋮</span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <!-- 连接节点 -->
+                    <template v-if="data.type === 'connection'">
+                      <el-dropdown-item v-if="activeConnectionIds.has(data.id)" command="createDatabase">新建数据库</el-dropdown-item>
+                      <el-dropdown-item v-if="!activeConnectionIds.has(data.id)" command="connect">连接</el-dropdown-item>
+                      <el-dropdown-item v-if="activeConnectionIds.has(data.id)" command="disconnect">断开</el-dropdown-item>
+                      <el-dropdown-item command="editConnection">编辑</el-dropdown-item>
+                      <el-dropdown-item command="deleteConnection" divided class="danger-item">删除</el-dropdown-item>
+                    </template>
+                    <!-- 数据库节点 -->
+                    <template v-if="data.type === 'database'">
+                      <el-dropdown-item command="createTable">新建表</el-dropdown-item>
+                      <el-dropdown-item command="refreshTables">刷新表</el-dropdown-item>
+                      <el-dropdown-item command="dropDatabase" divided class="danger-item">删除数据库</el-dropdown-item>
+                    </template>
+                    <!-- 表节点 -->
+                    <template v-if="data.type === 'table'">
+                      <el-dropdown-item command="viewStructure">查看结构</el-dropdown-item>
+                      <el-dropdown-item command="dropTable" divided class="danger-item">删除表</el-dropdown-item>
+                    </template>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
             </span>
           </div>
         </template>
@@ -124,6 +131,23 @@ const showTableStructureDialog = ref(false)
 const tableStructureTarget = ref(null)
 
 const treeProps = { children: 'children', label: 'name' }
+
+// ===== 下拉菜单操作分发 =====
+
+function handleAction(command, data) {
+  switch (command) {
+    case 'createDatabase': handleCreateDatabase(data); break
+    case 'connect': handleConnect(data); break
+    case 'disconnect': handleDisconnect(data); break
+    case 'editConnection': handleEditConnection(data); break
+    case 'deleteConnection': handleDeleteConnection(data); break
+    case 'createTable': handleCreateTable(data); break
+    case 'refreshTables': handleRefreshTables(data); break
+    case 'dropDatabase': handleDropDatabase(data); break
+    case 'viewStructure': handleViewTableStructure(data); break
+    case 'dropTable': handleDropTable(data); break
+  }
+}
 
 onMounted(() => {
   loadConnections()
@@ -538,8 +562,6 @@ defineExpose({ loadConnections, getRuntimeId, isConnected })
 
 .node-actions {
   display: none;
-  align-items: center;
-  gap: 2px;
   flex-shrink: 0;
 }
 
@@ -547,34 +569,57 @@ defineExpose({ loadConnections, getRuntimeId, isConnected })
   display: flex;
 }
 
-.action-btn {
+.action-trigger {
   width: 20px;
   height: 20px;
-  border: none;
-  background: none;
-  color: var(--content-text-hint);
-  cursor: pointer;
-  font-size: 11px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 3px;
-  transition: all 0.15s;
+  color: var(--content-text-hint);
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: all 0.2s;
 }
 
-.action-btn:hover {
+.action-trigger:hover {
   color: var(--accent);
   background: rgba(255, 144, 0, 0.1);
 }
 
-.action-btn.delete-btn:hover {
-  color: var(--error);
-  background: rgba(217, 48, 37, 0.1);
+/* 下拉菜单暗黑主题 */
+.mysql-tree :deep(.el-dropdown-menu) {
+  background: var(--content-bg-card);
+  border: 1px solid var(--content-border);
+  padding: 4px;
 }
 
-.action-btn.disconnect-btn:hover {
-  color: var(--error);
-  background: rgba(217, 48, 37, 0.1);
+.mysql-tree :deep(.el-dropdown-menu__item) {
+  color: var(--content-text);
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 3px;
+}
+
+.mysql-tree :deep(.el-dropdown-menu__item:hover) {
+  background: rgba(255, 144, 0, 0.1);
+  color: var(--accent);
+}
+
+.mysql-tree :deep(.el-dropdown-menu__item.danger-item) {
+  color: #ff3b30;
+}
+
+.mysql-tree :deep(.el-dropdown-menu__item.danger-item:hover) {
+  background: rgba(255, 59, 48, 0.1);
+  color: #ff3b30;
+}
+
+.mysql-tree :deep(.el-dropdown-menu__item--divided:before) {
+  border-top-color: var(--content-border);
+  margin: 4px 0;
 }
 
 .connection-node.is-connected .node-label {
@@ -619,15 +664,15 @@ defineExpose({ loadConnections, getRuntimeId, isConnected })
 }
 
 .tree-body::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: #000000;
 }
 
 .tree-body::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
+  background: var(--accent);
   border-radius: 3px;
 }
 
 .tree-body::-webkit-scrollbar-thumb:hover {
-  background: #444444;
+  background: var(--accent-hover);
 }
 </style>

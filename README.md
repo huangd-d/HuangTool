@@ -24,7 +24,7 @@ electron/                    # Electron 主进程
 │   ├── api/
 │   │   ├── apiHandler.js    # IPC 处理：项目/分类/接口 CRUD + 请求
 │   │   ├── docsHandler.js   # IPC 处理：docs 目录列表
-│   │   └── requestHandler.js # HTTP 请求引擎 (node-fetch + ProxyAgent)
+│   │   ├── requestHandler.js # HTTP 请求引擎 (node-fetch + ProxyAgent)
 │   │   ├── mysqlConnection.js # MySQL 逻辑层（纯 mysql2/promise）
 │   │   ├── mysqlHandler.js  # IPC 处理：MySQL 连接/库/表/查询
 │   │   └── mysqlConfig.js   # MySQL 连接配置持久化（mysql/mysql-connections.json）
