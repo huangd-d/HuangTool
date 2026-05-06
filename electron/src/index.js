@@ -20,7 +20,7 @@ import { registerProtocol, handleProtocol } from './protocol/protocolHandler.js'
 import { createWindow, registerWindowEvents, initializeFirstTab } from './window/windowManager.js'
 import { registerApiHandlers } from './api/apiHandler.js'
 import { registerDocsHandlers } from './api/docsHandler.js'
-import { registerDatabaseHandlers } from './api/databaseHandler.js'
+import { registerDatabaseHandlers } from './api/handler.js'
 
 // 注册协议
 registerProtocol()

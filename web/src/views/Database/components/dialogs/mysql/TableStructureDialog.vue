@@ -100,9 +100,9 @@ async function loadStructure() {
   loading.value = true
   loadError.value = ''
   try {
-    if (!window.electronAPI?.databaseGetTableStructure) throw new Error('electronAPI 不可用')
-    structure.value = await window.electronAPI.databaseGetTableStructure(
-      props.connectionId, props.dbName, props.tableName
+    if (!window.electronAPI?.dbCall) throw new Error('electronAPI 不可用')
+    structure.value = await window.electronAPI.dbCall(
+      props.connectionId, 'getTableStructure', props.dbName, props.tableName
     )
   } catch (err) {
     loadError.value = err.message || '加载表结构失败'
@@ -119,9 +119,9 @@ async function handleAddColumn() {
   }
   addingColumn.value = true
   try {
-    if (!window.electronAPI?.databaseAlterTableAddColumn) throw new Error('electronAPI 不可用')
-    await window.electronAPI.databaseAlterTableAddColumn(
-      props.connectionId, props.dbName, props.tableName,
+    if (!window.electronAPI?.dbCall) throw new Error('electronAPI 不可用')
+    await window.electronAPI.dbCall(
+      props.connectionId, 'alterTableAddColumn', props.dbName, props.tableName,
       {
         name: newColumn.value.name.trim(),
         type: newColumn.value.type,

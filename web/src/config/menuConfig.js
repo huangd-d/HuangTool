@@ -5,7 +5,7 @@ export const menuItems = [
     { id: 'api', title: 'API管理', icon: Document, hIcon: '🔧', path: '/api', desc: 'API管理' },
     { id: 'docs', title: '技术文档访问', icon: Memo, hIcon: '📄', path: '/docs', desc: '技术文档访问' },
     { id: 'office', title: '办公文件预览', icon: Files, hIcon: '📁', path: '/office', desc: '办公文件预览' },
-    { id: 'database', title: '数据库', icon: Coin, hIcon: '🗄', path: '/database', desc: '数据库管理' }
+    { id: 'database', title: '数据库', icon: Coin, hIcon: '🛢️', path: '/database', desc: '数据库管理' }
 ]
 
 export function createTab(menu) {

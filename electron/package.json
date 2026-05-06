@@ -14,6 +14,7 @@
     "build:linux": "npm run build:web && electron-builder --linux"
   },
   "dependencies": {
+    "ioredis": "^5.10.1",
     "mysql2": "^3.22.3",
     "node-fetch": "^3.3.2",
     "proxy-agent": "^6.3.1"

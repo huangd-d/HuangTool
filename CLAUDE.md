@@ -8,7 +8,7 @@
 - **Vue 3** + **Vue Router 5** (history 模式) + **Element Plus 2**
 - **Vite 8** (构建工具)
 - **node-fetch** + **proxy-agent** (API 请求与代理)
-- **mysql2** (数据库驱动，当前仅 MySQL)
+- **mysql2** (MySQL 驱动) + **ioredis** (Redis 驱动)
 - **jit-viewer** (Office 文档渲染)
 
 ## 项目结构
@@ -24,9 +24,12 @@ electron/                    # Electron 主进程
 │   │   ├── apiHandler.js    # IPC 处理：项目/分类/接口 CRUD + 请求
 │   │   ├── docsHandler.js   # IPC 处理：docs 目录列表
 │   │   ├── requestHandler.js # HTTP 请求引擎 (node-fetch + ProxyAgent)
-│   │   ├── databaseConnection.js # 数据库逻辑层（纯 mysql2/promise，无 Electron 依赖）
-│   │   ├── databaseHandler.js  # IPC 处理：数据库连接/库/表/查询
-│   │   └── databaseConfig.js   # 数据库连接配置持久化（database/database-connections.json）
+│   │   ├── connection-manager.js # 统一连接管理（Map + 策略注册 + call() 分发）
+│   │   ├── handler.js       # 统一 IPC 注册（db-* 前缀 + db-call 通用分发）
+│   │   ├── config.js        # 共用连接配置持久化（database/database-connections.json）
+│   │   └── strategies/
+│   │       ├── mysql.js     # MySQL 策略（mysql2/promise），type: 'mysql'
+│   │       └── redis.js     # Redis 策略（ioredis），type: 'redis'
 │   ├── protocol/
 │   │   └── protocolHandler.js # 自定义 app:// + docs:// 协议（前端应用 + 文档站点 + swagger）
 │   └── window/
@@ -70,14 +73,23 @@ web/                         # Vue 3 前端
 │       │   └── index.vue        # 技术文档：目录列表 + webview
 │       ├── Office/
 │       │   └── index.vue        # Office预览：文件选择 + jit-viewer
-│       └── Database/             # 数据库管理模块
-│           ├── index.vue        # 主视图：左侧树 + 右侧SQL面板
+│       └── Database/             # 数据库管理模块（MySQL + Redis，策略模式）
+│           ├── index.vue        # 主视图：左侧双树 + 右侧动态面板
+│           ├── composables/
+│           │   └── useConnectionManager.js  # 共享连接状态管理
 │           └── components/
-│               ├── DatabaseTree.vue    # 三级树（连接→库→表，el-dropdown）
-│               ├── SqlPanel.vue         # SQL编辑器 + 结果表格
+│               ├── MysqlTree.vue        # MySQL 树（独立连接管理 + 专属对话框）
+│               ├── RedisTree.vue        # Redis 树（独立连接管理 + 专属对话框）
+│               ├── panels/             # 右侧面板注册表
+│               │   ├── MysqlPanel.vue  # MySQL: SQL编辑器 + 结果表格
+│               │   ├── RedisPanel.vue  # Redis: 命令面板 + Key值编辑器
+│               │   └── index.js        # panels = { mysql, redis }
 │               └── dialogs/
-│                   ├── ConnectionDialog / CreateDatabaseDialog
-│                   ├── CreateTableDialog / TableStructureDialog
+│                   ├── ConnectionDialog.vue  # 统一连接表单（根据 dbType 切换）
+│                   ├── mysql/               # MySQL 专属对话框
+│                   │   ├── CreateDatabaseDialog / CreateTableDialog / TableStructureDialog
+│                   └── redis/               # Redis 专属对话框
+│                       ├── AddKeyDialog / TTLDialog / RenameDialog
 ├── vite.config.js           # 条件base + outDir + webview + 路径别名配置
 └── package.json             # 前端依赖
 
@@ -119,12 +131,15 @@ package.json                 # 根目录构建编排脚本
 - 文件选择 + 最近文件列表 + 多标签页预览（每个 tab 独立 `createViewer` 实例）
 
 ### 4. 数据库管理
-- 三级树结构：**连接 → 数据库 → 表**
-- 连接配置持久化到 `electron/database/database-connections.json`，支持 `type` 字段（database/postgres/sqlite）兼容多类型
-- 连接弹框含数据库类型选择器和测试连接按钮
-- 树节点 hover 显示常用操作图标 + `⋮` 下拉菜单：连接节点（连接/断开图标 + 下拉：建库/编辑/删除）、库节点（刷新图标 + 下拉：建表/删库）、表节点（下拉：查看结构/删表）
-- 表结构弹框展示 DESCRIBE 结果 + 添加列功能
-- 右侧 SqlPanel：SQL 编辑器（Ctrl+Enter 执行）+ 结果表格
+- 左侧按类型纵向排列 MysqlTree + RedisTree，右侧面板由点击节点类型自动切换
+- **MySQL**：三级树结构（**连接 → 数据库 → 表**），连接配置 `type: 'mysql'`（也支持 postgres/sqlite 子类型）
+- **Redis**：三级树结构（**连接 → DB号(0-15) → Key**），连接配置 `type: 'redis'`
+- 连接配置共用 `database-connections.json`，各树按 `type` 字段过滤
+- MysqlTree / RedisTree 各自独立管理连接状态和展开节点，切换互不影响
+- 树节点 hover 显示常用操作图标 + `⋮` 下拉菜单
+- MySQL 右侧：MysqlPanel（SQL 编辑器 + 结果表格）
+- Redis 右侧：RedisPanel（命令输入 + 内联结果 + Key值编辑器，支持 string/hash/list/set/zset）
+- Redis 支持：SCAN 分页、Key CRUD、TTL 管理、重命名、清空 DB
 
 ## IPC 通信接口 (preload.js → window.electronAPI)
 
@@ -139,10 +154,8 @@ package.json                 # 根目录构建编排脚本
 | API接口 | `getApiEndpoints()`, `createApiEndpoint()`, `updateApiEndpoint()`, `deleteApiEndpoint()` |
 | API请求 | `sendApiRequest()`, `getFullEndpoint()` |
 | 文档 | `getDocsDirectories()` |
-| 数据库连接 | `databaseConnect()`, `databaseDisconnect()`, `databaseTestConnection()`, `databaseGetConnections()`, `databaseGetSavedConnections()`, `databaseSaveConnection()`, `databaseDeleteSavedConnection()` |
-| 数据库库 | `databaseListDatabases()`, `databaseCreateDatabase()`, `databaseDropDatabase()` |
-| 数据库表 | `databaseListTables()`, `databaseCreateTable()`, `databaseDropTable()`, `databaseGetTableStructure()`, `databaseAlterTableAddColumn()` |
-| 数据库查询 | `databaseExecuteQuery()` |
+| 数据库连接 | `dbConnect()`, `dbDisconnect()`, `dbTest()`, `dbConnections()`, `dbSavedConnections()`, `dbSaveConnection()`, `dbDeleteConnection()` |
+| 数据库调用 | `dbCall(connectionId, method, ...args)` — 通用策略方法分发（MySQL/Redis 共用） |
 
 ## 开发与构建命令
 
@@ -168,7 +181,7 @@ npm run build:linux      # 构建 Linux 安装包
 ## 打包架构
 
 - **electron-builder**：Windows (Portable) + Linux (AppImage/deb)
-- **资源分离**：`web-dist/`、`swagger/` 和 `docs/` 通过 `extraResources` 放在 asar 外部（swagger 需运行时写入，docs 体积大，web-dist 为前端构建产物）。`database/` 目录目前未加入 extraResources，且 `databaseConfig.js` 使用 `__dirname` 相对路径，生产环境写入可能需适配
+- **资源分离**：`web-dist/`、`swagger/` 和 `docs/` 通过 `extraResources` 放在 asar 外部（swagger 需运行时写入，docs 体积大，web-dist 为前端构建产物）。`database/` 目录目前未加入 extraResources，且 `config.js` 使用 `__dirname` 相对路径，生产环境写入可能需适配
 - **生产环境路径**：`swagger/` 和 `docs/` 在打包后位于 `process.resourcesPath/` 下
 - **生产环境页面加载**：通过 `app://web-dist/` 自定义协议 serve `web-dist/` 目录，支持 Vue Router history 模式
 - **Vite 构建**：`base: 'app://web-dist/'`（构建时）使构建产物中的资源引用使用自定义协议

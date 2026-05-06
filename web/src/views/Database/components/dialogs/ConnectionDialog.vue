@@ -1,58 +1,86 @@
 <template>
   <Teleport to="body">
-  <div class="dialog-overlay" v-if="modelValue">
-    <div class="dialog">
-      <h3>{{ isEdit ? '编辑连接' : '新建连接' }}</h3>
-      <div class="dialog-content">
-        <div class="form-item">
-          <label>连接名称:</label>
-          <input v-model="form.name" type="text" placeholder="如: 本地开发库">
+    <div class="dialog-overlay" v-if="modelValue">
+      <div class="dialog">
+        <h3>{{ isEdit ? '编辑连接' : '新建连接' }}</h3>
+        <div class="dialog-content">
+          <div class="form-item">
+            <label>连接名称:</label>
+            <input v-model="form.name" type="text" :placeholder="dbType === 'redis' ? '如: 本地Redis' : '如: 本地开发库'">
+          </div>
+          <!-- MySQL / SQL type selector -->
+          <div class="form-item" v-if="dbType === 'mysql'">
+            <label>数据库类型:</label>
+            <select v-model="form.type">
+              <option value="mysql">MySQL</option>
+              <option value="postgres">PostgreSQL</option>
+              <option value="sqlite">SQLite</option>
+            </select>
+          </div>
+          <!-- MySQL/PostgreSQL fields -->
+          <template v-if="isSqlType">
+            <div class="form-item">
+              <label>主机地址:</label>
+              <input v-model="form.host" type="text" placeholder="127.0.0.1">
+            </div>
+            <div class="form-item">
+              <label>端口:</label>
+              <input v-model.number="form.port" type="number" :placeholder="form.type === 'postgres' ? '5432' : '3306'">
+            </div>
+            <div class="form-item">
+              <label>用户名:</label>
+              <input v-model="form.user" type="text" placeholder="root">
+            </div>
+            <div class="form-item">
+              <label>密码:</label>
+              <input v-model="form.password" type="password" placeholder="密码">
+            </div>
+          </template>
+          <!-- SQLite fields -->
+          <template v-if="form.type === 'sqlite'">
+            <div class="form-item">
+              <label>数据库文件路径:</label>
+              <input v-model="form.filePath" type="text" placeholder="/path/to/database.db">
+            </div>
+          </template>
+          <!-- Redis fields -->
+          <template v-if="dbType === 'redis'">
+            <div class="form-item">
+              <label>主机地址:</label>
+              <input v-model="form.host" type="text" placeholder="127.0.0.1">
+            </div>
+            <div class="form-item">
+              <label>端口:</label>
+              <input v-model.number="form.port" type="number" placeholder="6379">
+            </div>
+            <div class="form-item">
+              <label>用户名:</label>
+              <input v-model="form.username" type="text" placeholder="default">
+            </div>
+            <div class="form-item">
+              <label>密码:</label>
+              <input v-model="form.password" type="password" placeholder="密码（可空）">
+            </div>
+            <div class="form-item">
+              <label>默认DB:</label>
+              <select v-model.number="form.db">
+                <option v-for="n in 16" :key="n - 1" :value="n - 1">{{ n - 1 }}</option>
+              </select>
+            </div>
+          </template>
         </div>
-        <div class="form-item">
-          <label>数据库类型:</label>
-          <select v-model="form.type">
-            <option value="database">MySQL</option>
-            <option value="postgres">PostgreSQL</option>
-            <option value="sqlite">SQLite</option>
-          </select>
+        <div v-if="testResult" class="test-feedback" :class="testResult">
+          {{ testMessage }}
         </div>
-        <template v-if="form.type === 'database' || form.type === 'postgres'">
-          <div class="form-item">
-            <label>主机地址:</label>
-            <input v-model="form.host" type="text" placeholder="127.0.0.1">
-          </div>
-          <div class="form-item">
-            <label>端口:</label>
-            <input v-model.number="form.port" type="number" :placeholder="form.type === 'postgres' ? '5432' : '3306'">
-          </div>
-          <div class="form-item">
-            <label>用户名:</label>
-            <input v-model="form.user" type="text" placeholder="root">
-          </div>
-          <div class="form-item">
-            <label>密码:</label>
-            <input v-model="form.password" type="password" placeholder="密码">
-          </div>
-        </template>
-        <template v-if="form.type === 'sqlite'">
-          <div class="form-item">
-            <label>数据库文件路径:</label>
-            <input v-model="form.filePath" type="text" placeholder="/path/to/database.db">
-          </div>
-        </template>
-      </div>
-      <div v-if="testResult" class="test-feedback" :class="testResult">
-        {{ testMessage }}
-      </div>
-      <div class="dialog-actions">
-        <button @click="close">取消</button>
-        <button @click="handleTest" :disabled="testing" class="test-btn">
-          {{ testing ? '测试中...' : '测试连接' }}
-        </button>
-        <button @click="handleSave" class="primary">保存</button>
+        <div class="dialog-actions">
+          <button @click="close">取消</button>
+          <button @click="handleTest" :disabled="testing" class="test-btn">
+            {{ testing ? '测试中...' : '测试连接' }}
+          </button>
+          <button @click="handleSave" class="primary">保存</button>
+        </div>
       </div>
     </div>
-  </div>
   </Teleport>
 </template>
 
@@ -61,20 +89,38 @@ import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
+  dbType: { type: String, default: 'mysql' },
   connection: { type: Object, default: null }
 })
 
 const emit = defineEmits(['update:modelValue', 'save'])
 
-const form = ref({
-  name: '',
-  type: 'database',
-  host: '127.0.0.1',
-  port: 3306,
-  user: 'root',
-  password: '',
-  filePath: ''
-})
+const isSqlType = computed(() => props.dbType === 'mysql' && form.value.type !== 'sqlite')
+
+const defaultForm = () => {
+  if (props.dbType === 'redis') {
+    return {
+      name: '',
+      type: 'redis',
+      host: '127.0.0.1',
+      port: 6379,
+      username: 'default',
+      password: '',
+      db: 0
+    }
+  }
+  return {
+    name: '',
+    type: 'mysql',
+    host: '127.0.0.1',
+    port: 3306,
+    user: 'root',
+    password: '',
+    filePath: ''
+  }
+}
+
+const form = ref(defaultForm())
 
 const testing = ref(false)
 const testResult = ref(null)
@@ -87,41 +133,52 @@ watch([() => props.modelValue, () => props.connection], ([visible, connection]) 
     testResult.value = null
     testMessage.value = ''
     if (connection) {
-      form.value = {
-        name: connection.name || '',
-        type: connection.type || 'database',
-        host: connection.host || '127.0.0.1',
-        port: connection.port || 3306,
-        user: connection.user || 'root',
-        password: connection.password || '',
-        filePath: connection.filePath || ''
+      if (props.dbType === 'redis') {
+        form.value = {
+          name: connection.name || '',
+          type: 'redis',
+          host: connection.host || '127.0.0.1',
+          port: connection.port || 6379,
+          username: connection.username || 'default',
+          password: connection.password || '',
+          db: connection.db || 0
+        }
+      } else {
+        form.value = {
+          name: connection.name || '',
+          type: connection.type || 'mysql',
+          host: connection.host || '127.0.0.1',
+          port: connection.port || 3306,
+          user: connection.user || 'root',
+          password: connection.password || '',
+          filePath: connection.filePath || ''
+        }
       }
     } else {
-      resetForm()
+      form.value = defaultForm()
     }
   }
 }, { immediate: true })
 
-function resetForm() {
-  form.value = {
-    name: '',
-    type: 'database',
-    host: '127.0.0.1',
-    port: 3306,
-    user: 'root',
-    password: '',
-    filePath: ''
-  }
+function close() {
+  emit('update:modelValue', false)
+  form.value = defaultForm()
   testResult.value = null
   testMessage.value = ''
 }
 
-function close() {
-  emit('update:modelValue', false)
-  resetForm()
-}
-
 function buildConfig() {
+  if (props.dbType === 'redis') {
+    return {
+      name: form.value.name || `${form.value.host}:${form.value.port}`,
+      type: 'redis',
+      host: form.value.host,
+      port: parseInt(form.value.port, 10) || 6379,
+      username: form.value.username,
+      password: form.value.password,
+      db: form.value.db
+    }
+  }
   const base = {
     name: form.value.name || `${form.value.host}:${form.value.port}`,
     type: form.value.type
@@ -144,8 +201,8 @@ async function handleTest() {
   testMessage.value = ''
   try {
     const config = buildConfig()
-    if (!window.electronAPI?.databaseTestConnection) throw new Error('electronAPI 不可用')
-    await window.electronAPI.databaseTestConnection(config)
+    if (!window.electronAPI?.dbTest) throw new Error('electronAPI 不可用')
+    await window.electronAPI.dbTest(config)
     testResult.value = 'success'
     testMessage.value = '连接成功'
   } catch (err) {
@@ -157,13 +214,20 @@ async function handleTest() {
 }
 
 function handleSave() {
-  if (form.value.type !== 'sqlite' && !form.value.host) {
-    alert('请输入主机地址')
-    return
-  }
-  if (form.value.type === 'sqlite' && !form.value.filePath) {
-    alert('请输入数据库文件路径')
-    return
+  if (props.dbType === 'redis') {
+    if (!form.value.host) {
+      alert('请输入主机地址')
+      return
+    }
+  } else {
+    if (form.value.type !== 'sqlite' && !form.value.host) {
+      alert('请输入主机地址')
+      return
+    }
+    if (form.value.type === 'sqlite' && !form.value.filePath) {
+      alert('请输入数据库文件路径')
+      return
+    }
   }
   emit('save', buildConfig())
   close()
@@ -173,7 +237,10 @@ function handleSave() {
 <style scoped>
 .dialog-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;

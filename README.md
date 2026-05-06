@@ -8,7 +8,7 @@
 - **Vue 3** + **Vue Router 5** (history 模式) + **Element Plus 2**
 - **Vite 8** (构建工具)
 - **node-fetch** + **proxy-agent** (API 请求与代理)
-- **mysql2** (数据库驱动)
+- **mysql2** (MySQL 驱动) + **ioredis** (Redis 驱动)
 - **jit-viewer** (Office 文档渲染)
 - 纯 JavaScript 项目，无 TypeScript / ESLint 配置
 
@@ -25,9 +25,10 @@ electron/                    # Electron 主进程
 │   │   ├── apiHandler.js    # IPC 处理：项目/分类/接口 CRUD + 请求
 │   │   ├── docsHandler.js   # IPC 处理：docs 目录列表
 │   │   ├── requestHandler.js # HTTP 请求引擎 (node-fetch + ProxyAgent)
-│   │   ├── databaseConnection.js # 数据库逻辑层（纯 mysql2/promise）
-│   │   ├── databaseHandler.js  # IPC 处理：数据库连接/库/表/查询
-│   │   └── databaseConfig.js   # 数据库连接配置持久化（database/database-connections.json）
+│   │   ├── connection-manager.js # 统一连接管理
+│   │   ├── handler.js       # 统一 IPC 注册（db-* 前缀）
+│   │   ├── config.js        # 共用连接配置持久化
+│   │   └── strategies/      # 数据库策略（mysql.js / redis.js）
 │   ├── protocol/
 │   │   └── protocolHandler.js # 自定义 app:// + docs:// 协议
 │   └── window/
@@ -74,11 +75,11 @@ web/                         # Vue 3 前端
 - 多标签页预览
 
 ### 4. 数据库管理
-- 三级树结构：连接 → 数据库 → 表
-- 连接配置持久化到 `electron/database/database-connections.json`，支持多类型（database/postgres/sqlite）
-- 连接弹框含数据库类型选择器和测试连接按钮
-- 数据库/表 CRUD：创建库、创建表、删除库/表、查看表结构、添加列
-- SQL 编辑器 + 查询结果展示
+- 左侧按类型纵向排列 MySQL 树 + Redis 树，右侧面板自动切换
+- **MySQL**：连接 → 数据库 → 表三级树，SQL 编辑器 + 结果表格
+- **Redis**：连接 → DB号 → Key 三级树，命令输入面板 + 类型感知值编辑器
+- 连接配置共用 `database-connections.json`，通过 `type` 字段区分
+- 支持 Key CRUD、TTL 管理、重命名、清空 DB 等操作
 
 ## 安装和运行
 

@@ -1,13 +1,10 @@
 <template>
   <div class="sql-panel">
-    <!-- SQL 编辑器 -->
     <div class="sql-section">
       <div class="sql-toolbar">
         <span class="sql-db" v-if="currentDb">{{ currentDb }}</span>
         <span class="sql-db none" v-else>未选择数据库</span>
-        <button class="btn btn-execute"
-                @click="handleExecute"
-                :disabled="!canExecute">
+        <button class="btn btn-execute" @click="handleExecute" :disabled="!canExecute">
           {{ executing ? '执行中...' : '执行' }}
         </button>
       </div>
@@ -20,7 +17,6 @@
       ></textarea>
     </div>
 
-    <!-- 结果区 -->
     <div class="result-section">
       <div class="result-toolbar">
         <span>查询结果</span>
@@ -53,11 +49,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const props = defineProps({
   runtimeId: { type: String, default: null },
-  currentDb: { type: String, default: '' }
+  currentDb: { type: String, default: '' },
+  tableName: { type: String, default: '' }
 })
 
 const emit = defineEmits(['query-executed'])
@@ -85,11 +82,9 @@ async function handleExecute() {
   executing.value = true
   resetResult()
   try {
-    if (!window.electronAPI?.databaseExecuteQuery) throw new Error('electronAPI 不可用')
-    const result = await window.electronAPI.databaseExecuteQuery(
-      props.runtimeId,
-      props.currentDb || '',
-      sql.value
+    if (!window.electronAPI?.dbCall) throw new Error('electronAPI 不可用')
+    const result = await window.electronAPI.dbCall(
+      props.runtimeId, 'executeQuery', props.currentDb || '', sql.value
     )
     queryTime.value = result.time
     if (result.columns.length > 0) {
@@ -111,6 +106,13 @@ function setSql(value) {
   sql.value = value
 }
 
+watch(() => props.tableName, (name) => {
+  if (name) {
+    sql.value = `SELECT * FROM \`${name}\` LIMIT 100`
+    handleExecute()
+  }
+})
+
 defineExpose({ setSql, resetResult })
 </script>
 
@@ -125,7 +127,6 @@ defineExpose({ setSql, resetResult })
   border-radius: 6px;
 }
 
-/* SQL 编辑区 */
 .sql-section {
   border-bottom: 1px solid var(--content-border);
   display: flex;
@@ -194,7 +195,6 @@ defineExpose({ setSql, resetResult })
   box-sizing: border-box;
 }
 
-/* 结果区 */
 .result-section {
   flex: 1;
   min-width: 0;
@@ -296,7 +296,6 @@ defineExpose({ setSql, resetResult })
   font-size: 13px;
 }
 
-/* 滚动条 */
 .result-content::-webkit-scrollbar,
 .result-table-wrap::-webkit-scrollbar {
   width: 6px;

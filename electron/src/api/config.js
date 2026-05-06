@@ -15,9 +15,24 @@ function ensureConfigFile() {
   }
 }
 
+function migrateConnections(data) {
+  let changed = false
+  for (const conn of data.connections) {
+    if (conn.type === 'database') {
+      conn.type = 'mysql'
+      changed = true
+    }
+  }
+  if (changed) {
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(data, null, 2))
+  }
+  return data
+}
+
 export function getSavedConnections() {
   ensureConfigFile()
-  return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8')).connections
+  const data = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'))
+  return migrateConnections(data).connections
 }
 
 export function saveConnection(config) {
@@ -31,7 +46,7 @@ export function saveConnection(config) {
       data.connections.push(config)
     }
   } else {
-    if (!config.type) config.type = 'database'
+    if (!config.type) config.type = 'mysql'
     config.id = Date.now().toString()
     data.connections.push(config)
   }
