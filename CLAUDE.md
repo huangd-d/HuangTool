@@ -74,12 +74,14 @@ web/                         # Vue 3 前端
 │       ├── Office/
 │       │   └── index.vue        # Office预览：文件选择 + jit-viewer
 │       └── Database/             # 数据库管理模块（MySQL + Redis，策略模式）
-│           ├── index.vue        # 主视图：左侧双树 + 右侧动态面板
+│           ├── index.vue        # 主视图：左侧统一标题栏 + 连接树列表 + 右侧动态面板
 │           ├── composables/
-│           │   └── useConnectionManager.js  # 共享连接状态管理
+│           │   └── useConnectionManager.js  # 统一连接状态管理（含 typeMap）
 │           └── components/
-│               ├── MysqlTree.vue        # MySQL 树（独立连接管理 + 专属对话框）
-│               ├── RedisTree.vue        # Redis 树（独立连接管理 + 专属对话框）
+│               ├── BaseConnectionTree.vue  # 连接树通用壳（头行 + 折叠 + 样式）
+│               ├── MysqlTree.vue        # MySQL 单连接树（BaseConnectionTree + el-tree + MySQL 对话框）
+│               ├── RedisTree.vue        # Redis 单连接树（BaseConnectionTree + el-tree + Redis 对话框）
+│               ├── treeRegistry.js      # 树组件注册表 { mysql, redis }，扩展新类型只需注册
 │               ├── panels/             # 右侧面板注册表
 │               │   ├── MysqlPanel.vue  # MySQL: SQL编辑器 + 结果表格
 │               │   ├── RedisPanel.vue  # Redis: 命令面板 + Key值编辑器
@@ -131,12 +133,14 @@ package.json                 # 根目录构建编排脚本
 - 文件选择 + 最近文件列表 + 多标签页预览（每个 tab 独立 `createViewer` 实例）
 
 ### 4. 数据库管理
-- 左侧按类型纵向排列 MysqlTree + RedisTree，右侧面板由点击节点类型自动切换
-- **MySQL**：三级树结构（**连接 → 数据库 → 表**），连接配置 `type: 'mysql'`（也支持 postgres/sqlite 子类型）
-- **Redis**：三级树结构（**连接 → DB号(0-15) → Key**），连接配置 `type: 'redis'`
-- 连接配置共用 `database-connections.json`，各树按 `type` 字段过滤
-- MysqlTree / RedisTree 各自独立管理连接状态和展开节点，切换互不影响
+- 左侧统一标题栏（"连接" + "+"下拉选择数据库类型），下方按创建顺序排列连接树，每连接一颗独立 el-tree
+- 每个连接树使用 `BaseConnectionTree` 壳组件（可折叠头行：连接名 + 连接/断开 + 编辑/删除下拉），内部按类型渲染 MysqlTree 或 RedisTree
+- **MySQL**：树结构（**数据库 → 表**），连接配置 `type: 'mysql'`（也支持 postgres/sqlite 子类型）
+- **Redis**：树结构（**DB号(0-15) → Key**），连接配置 `type: 'redis'`
+- 连接配置共用 `database-connections.json`，`useConnectionManager` 统一管理所有类型连接（含 typeMap）
+- `treeRegistry.js` 映射数据库类型到树组件，扩展新类型只需创建 XxxTree.vue + 注册
 - 树节点 hover 显示常用操作图标 + `⋮` 下拉菜单
+- 右侧面板由 `connManager.getConnectionType(savedId)` 自动判断，切换 MysqlPanel 或 RedisPanel
 - MySQL 右侧：MysqlPanel（SQL 编辑器 + 结果表格）
 - Redis 右侧：RedisPanel（命令输入 + 内联结果 + Key值编辑器，支持 string/hash/list/set/zset）
 - Redis 支持：SCAN 分页、Key CRUD、TTL 管理、重命名、清空 DB

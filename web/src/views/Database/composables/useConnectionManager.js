@@ -1,16 +1,20 @@
 import { ref } from 'vue'
 
-export function useConnectionManager(filterType) {
+export function useConnectionManager() {
   const activeIds = ref(new Set())
   const idMap = ref(new Map())
+  const typeMap = ref(new Map())
 
-  function add(savedId, runtimeId) {
+  function add(savedId, runtimeId, dbType) {
     const s = new Set(activeIds.value)
     s.add(savedId)
     activeIds.value = s
     const m = new Map(idMap.value)
     m.set(savedId, runtimeId)
     idMap.value = m
+    const t = new Map(typeMap.value)
+    t.set(savedId, dbType)
+    typeMap.value = t
   }
 
   function remove(savedId) {
@@ -20,6 +24,9 @@ export function useConnectionManager(filterType) {
     const m = new Map(idMap.value)
     m.delete(savedId)
     idMap.value = m
+    const t = new Map(typeMap.value)
+    t.delete(savedId)
+    typeMap.value = t
   }
 
   function getRuntimeId(savedId) {
@@ -30,9 +37,13 @@ export function useConnectionManager(filterType) {
     return activeIds.value.has(savedId)
   }
 
+  function getConnectionType(savedId) {
+    return typeMap.value.get(savedId)
+  }
+
   async function connect(data) {
     const result = await window.electronAPI.dbConnect(data.config)
-    add(data.id, result.id)
+    add(data.id, result.id, data.config?.type || 'mysql')
     return result
   }
 
@@ -43,8 +54,7 @@ export function useConnectionManager(filterType) {
   }
 
   async function loadConnections() {
-    const all = await window.electronAPI.dbSavedConnections()
-    return filterType ? all.filter(c => c.type === filterType) : all
+    return window.electronAPI.dbSavedConnections()
   }
 
   async function saveConnection(config) {
@@ -60,8 +70,8 @@ export function useConnectionManager(filterType) {
   }
 
   return {
-    activeIds, idMap,
-    add, remove, getRuntimeId, isConnected,
+    activeIds, idMap, typeMap,
+    add, remove, getRuntimeId, isConnected, getConnectionType,
     connect, disconnect, loadConnections, saveConnection, deleteConnection, testConnection
   }
 }

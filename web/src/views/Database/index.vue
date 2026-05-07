@@ -1,20 +1,33 @@
 <template>
   <div class="database-container">
     <div class="database-sidebar">
+      <div class="sidebar-header">
+        <h3>连接</h3>
+        <el-dropdown trigger="hover" @command="handleAddConnection">
+          <button class="btn-icon" title="新建连接">+</button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="mysql">MySQL</el-dropdown-item>
+              <el-dropdown-item command="redis">Redis</el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
+
       <div class="db-tree-area">
-        <MysqlTree
-          ref="mysqlTreeRef"
-          @select-connection="handleMysqlSelectConnection"
-          @select-database="handleMysqlSelectDatabase"
+        <component
+          v-for="conn in allConnections"
+          :key="conn.id"
+          :is="treeComponents[conn.type] || treeComponents.mysql"
+          :connection="conn"
+          :conn-manager="connManager"
+          @select-connection="handleSelectConnection"
+          @select-database="handleSelectDatabase"
           @select-table="handleSelectTable"
-          @connection-changed="handleMysqlConnectionChanged"
-        />
-        <RedisTree
-          ref="redisTreeRef"
-          @select-connection="handleRedisSelectConnection"
-          @select-database="handleRedisSelectDatabase"
           @select-key="handleSelectKey"
-          @connection-changed="handleRedisConnectionChanged"
+          @connection-changed="handleConnectionChanged"
+          @connection-updated="loadAllConnections"
+          @connection-deleted="handleConnectionDeleted"
         />
       </div>
     </div>
@@ -39,17 +52,24 @@
       </div>
     </div>
   </div>
+
+  <ConnectionDialog
+    v-model="showNewConnectionDialog"
+    :db-type="newConnectionType"
+    @save="handleSaveNewConnection"
+  />
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import MysqlTree from './components/MysqlTree.vue'
-import RedisTree from './components/RedisTree.vue'
+import { ref, onMounted } from 'vue'
+import { useConnectionManager } from './composables/useConnectionManager.js'
+import { treeComponents } from './components/treeRegistry.js'
 import { panels } from './components/panels/index.js'
+import ConnectionDialog from './components/dialogs/ConnectionDialog.vue'
 
-const mysqlTreeRef = ref(null)
-const redisTreeRef = ref(null)
+const connManager = useConnectionManager()
 
+const allConnections = ref([])
 const activePanel = ref('mysql')
 const runtimeId = ref(null)
 const activeDb = ref('')
@@ -57,34 +77,53 @@ const selectedTable = ref('')
 const selectedKey = ref('')
 const selectedKeyType = ref('')
 
-// ===== MySQL events =====
+const showNewConnectionDialog = ref(false)
+const newConnectionType = ref('mysql')
 
-function handleMysqlSelectConnection(data) {
-  if (mysqlTreeRef.value?.isConnected(data.id)) {
-    const rid = mysqlTreeRef.value.getRuntimeId(data.id)
-    if (rid) {
-      activePanel.value = 'mysql'
-      runtimeId.value = rid
-      activeDb.value = ''
-      selectedTable.value = ''
-      selectedKey.value = ''
-    }
+onMounted(() => {
+  loadAllConnections()
+})
+
+async function loadAllConnections() {
+  try {
+    allConnections.value = await connManager.loadConnections()
+  } catch (err) {
+    console.error('加载连接列表失败:', err)
   }
 }
 
-function handleMysqlSelectDatabase(data) {
-  const rid = mysqlTreeRef.value?.getRuntimeId(data.connectionId)
+function getPanelType(savedId) {
+  const type = connManager.getConnectionType(savedId)
+  if (type === 'redis') return 'redis'
+  return 'mysql'
+}
+
+function handleSelectConnection(data) {
+  const rid = connManager.getRuntimeId(data.id)
   if (rid) {
-    activePanel.value = 'mysql'
+    const panel = getPanelType(data.id)
+    activePanel.value = panel
     runtimeId.value = rid
-    activeDb.value = data.dbName
+    activeDb.value = panel === 'redis' ? '0' : ''
+    selectedTable.value = ''
+    selectedKey.value = ''
+  }
+}
+
+function handleSelectDatabase(data) {
+  const rid = connManager.getRuntimeId(data.connectionId)
+  if (rid) {
+    const panel = getPanelType(data.connectionId)
+    activePanel.value = panel
+    runtimeId.value = rid
+    activeDb.value = panel === 'redis' ? String(data.dbNumber) : data.dbName
     selectedTable.value = ''
     selectedKey.value = ''
   }
 }
 
 function handleSelectTable(data) {
-  const rid = mysqlTreeRef.value?.getRuntimeId(data.connectionId)
+  const rid = connManager.getRuntimeId(data.connectionId)
   if (rid) {
     activePanel.value = 'mysql'
     runtimeId.value = rid
@@ -93,47 +132,8 @@ function handleSelectTable(data) {
   }
 }
 
-function handleMysqlConnectionChanged({ savedId, runtimeId: rid, action }) {
-  if (action === 'connect' && rid) {
-    activePanel.value = 'mysql'
-    runtimeId.value = rid
-    activeDb.value = ''
-    selectedTable.value = ''
-  } else if (action === 'disconnect' || action === 'delete') {
-    if (runtimeId.value === mysqlTreeRef.value?.getRuntimeId(savedId)) {
-      runtimeId.value = null
-      activeDb.value = ''
-      selectedTable.value = ''
-    }
-  }
-}
-
-// ===== Redis events =====
-
-function handleRedisSelectConnection(data) {
-  if (redisTreeRef.value?.isConnected(data.id)) {
-    const rid = redisTreeRef.value.getRuntimeId(data.id)
-    if (rid) {
-      activePanel.value = 'redis'
-      runtimeId.value = rid
-      activeDb.value = '0'
-      selectedKey.value = ''
-    }
-  }
-}
-
-function handleRedisSelectDatabase(data) {
-  const rid = redisTreeRef.value?.getRuntimeId(data.connectionId)
-  if (rid) {
-    activePanel.value = 'redis'
-    runtimeId.value = rid
-    activeDb.value = String(data.dbNumber)
-    selectedKey.value = ''
-  }
-}
-
 function handleSelectKey(data) {
-  const rid = redisTreeRef.value?.getRuntimeId(data.connectionId)
+  const rid = connManager.getRuntimeId(data.connectionId)
   if (rid) {
     activePanel.value = 'redis'
     runtimeId.value = rid
@@ -143,22 +143,50 @@ function handleSelectKey(data) {
   }
 }
 
-function handleRedisConnectionChanged({ savedId, runtimeId: rid, action }) {
+function handleConnectionChanged({ savedId, runtimeId: rid, action }) {
   if (action === 'connect' && rid) {
-    activePanel.value = 'redis'
+    const panel = getPanelType(savedId)
+    activePanel.value = panel
     runtimeId.value = rid
-    activeDb.value = '0'
+    activeDb.value = panel === 'redis' ? '0' : ''
+    selectedTable.value = ''
     selectedKey.value = ''
   } else if (action === 'disconnect' || action === 'delete') {
-    if (runtimeId.value === redisTreeRef.value?.getRuntimeId(savedId)) {
+    if (runtimeId.value === rid) {
       runtimeId.value = null
       activeDb.value = ''
+      selectedTable.value = ''
       selectedKey.value = ''
     }
   }
 }
 
-// ===== Panel events =====
+function handleConnectionDeleted(savedId) {
+  // If disconnect already cleared the panel, getRuntimeId returns undefined
+  // For non-connected deletions, check and clear if needed
+  const rid = connManager.getRuntimeId(savedId)
+  if (rid && runtimeId.value === rid) {
+    runtimeId.value = null
+    activeDb.value = ''
+    selectedTable.value = ''
+    selectedKey.value = ''
+  }
+  loadAllConnections()
+}
+
+function handleAddConnection(dbType) {
+  newConnectionType.value = dbType
+  showNewConnectionDialog.value = true
+}
+
+async function handleSaveNewConnection(formData) {
+  try {
+    await window.electronAPI.dbSaveConnection(formData)
+    await loadAllConnections()
+  } catch (err) {
+    alert('保存失败: ' + (err.message || '未知错误'))
+  }
+}
 
 function handleQueryExecuted() {}
 function handleCommandExecuted() {}
@@ -188,11 +216,45 @@ function handleKeySaved() {}
   background: var(--content-bg);
 }
 
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--content-border);
+  flex-shrink: 0;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.btn-icon {
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: rgba(255, 144, 0, 0.1);
+  color: var(--accent);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.btn-icon:hover {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+
 .db-tree-area {
   flex: 1;
   overflow-y: auto;
-  /* display: flex; */
-  /* flex-direction: column; */
 }
 
 .db-tree-area::-webkit-scrollbar {
