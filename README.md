@@ -113,6 +113,20 @@ npm run dev:web          # 前端开发
 npm run dev:electron     # Electron 开发
 ```
 
+## 发布
+
+使用 GitHub Actions 自动构建和发布。打 tag 触发：
+
+```bash
+cd electron
+npm version patch           # patch/minor/major
+git push && git push --tags
+```
+
+也可在 GitHub Actions 页面手动触发（workflow_dispatch）。
+
+构建产物自动上传到 GitHub Release 页面。
+
 ## 构建和打包
 
 ```bash

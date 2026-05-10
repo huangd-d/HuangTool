@@ -185,6 +185,9 @@ npm run build:linux      # 构建 Linux 安装包
 ## 打包架构
 
 - **electron-builder**：Windows (Portable) + Linux (AppImage/deb)
+- **GitHub Actions 发布**：`.github/workflows/release.yml`，tag `v*` 触发 + workflow_dispatch 手动触发，win/linux 矩阵构建，`--publish always` 自动上传到 GitHub Release
+- **publish 配置**：`provider: github`，owner: `huangd-d`，repo: `Htool`
+- **产物命名**：`HTool-${version}.exe`（Windows）、`HTool-${version}.AppImage` + `.deb`（Linux）
 - **资源分离**：`web-dist/`、`swagger/` 和 `docs/` 通过 `extraResources` 放在 asar 外部（swagger 需运行时写入，docs 体积大，web-dist 为前端构建产物）。`database/` 目录目前未加入 extraResources，且 `config.js` 使用 `__dirname` 相对路径，生产环境写入可能需适配
 - **生产环境路径**：`swagger/` 和 `docs/` 在打包后位于 `process.resourcesPath/` 下
 - **生产环境页面加载**：通过 `app://web-dist/` 自定义协议 serve `web-dist/` 目录，支持 Vue Router history 模式
@@ -194,11 +197,12 @@ npm run build:linux      # 构建 Linux 安装包
 ## 关键约定
 
 - **无数据库**：API 数据使用 JSON 文件存储在 `electron/swagger/`；数据库模块的连接配置存储在 `electron/database/database-connections.json`
-- **文档不入 Git**：`electron/docs/*` 已在 `.gitignore` 中排除，文档站点为外部导入
+- **文档已入库**：`electron/docs/` 和 `electron/swagger/` 含示例数据，已纳入 Git 管理；`electron/database/` 仍在 `.gitignore` 中（含用户连接配置）
 - **frameless 窗口**：自定义标题栏，`-webkit-app-region: drag` 实现拖拽
 - **webview 标签**：Vite 配置中将 `<webview>` 标记为自定义元素，避免 Vue 编译
 - **路径别名**：Vite 配置 `@`→`/src`、`views`→`/src/views`、`config`→`/src/config`
 - **安全**：`contextIsolation: true`, `nodeIntegration: false`, app:// 及 docs:// 协议含路径遍历防护
 - **样式系统**：暗黑橙主题 CSS 变量（`--accent: #FF9000`，Arial 字体栈，13px 基础字号），滚动条统一为黑色轨道 + 橙色滑块（`--accent`）
 - **查看版本信息**：使用package.json 中的版本号
-- **忽略**：electron/swagger 和 electron/docs 目录下的所有文件，在ai查询时忽略
+- **发布流程**：`/git tag`（或 `cd electron && npm version patch && git push --tags`）触发 GitHub Actions 自动构建 + 发布到 GitHub Release
+- **忽略**：electron/database 目录下的所有文件，在ai查询时忽略
