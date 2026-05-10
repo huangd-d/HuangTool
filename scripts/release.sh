@@ -25,16 +25,16 @@ cd "$ROOT_DIR/web"
 npm run build
 
 # Read current version
-CURRENT=$(node -e "console.log(require('$ELECTRON_DIR/package.json').version)")
+cd "$ELECTRON_DIR"
+CURRENT=$(node -p "require('./package.json').version")
 echo ">>> Current version: $CURRENT"
 
 # Bump version (modifies package.json + package-lock.json, commits, tags)
-echo ">>> Bumping $LEVEL version in electron/..."
-cd "$ELECTRON_DIR"
+echo ">>> Bumping $LEVEL version..."
 npm version "$LEVEL" -m "v%s"
 
 # Amend the version commit to include web-dist changes
-NEW_VERSION=$(node -e "console.log(require('$ELECTRON_DIR/package.json').version)")
+NEW_VERSION=$(node -p "require('./package.json').version")
 echo ">>> New version: $NEW_VERSION"
 
 if git -C "$ROOT_DIR" diff --quiet HEAD -- electron/web-dist/ 2>/dev/null; then
