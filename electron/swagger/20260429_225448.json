@@ -1,0 +1,92 @@
+{
+  "id": "1777474502457",
+  "name": "示例项目11112222",
+  "description": "示例项目1111",
+  "type": "project",
+  "config": {
+    "fileName": "20260429_225448.json",
+    "baseUrl": "https://jsonplaceholder.typicode.com",
+    "proxy": "",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "timeout": 30000
+  },
+  "children": [
+    {
+      "id": "1777474522107",
+      "name": "用户管理1",
+      "description": "所有用户接口11223333",
+      "type": "category",
+      "config": {},
+      "children": [
+        {
+          "id": "1777474541196",
+          "name": "获取所有用户1155",
+          "description": "获取所有用户111123",
+          "type": "endpoint",
+          "config": {
+            "url": "/users",
+            "method": "GET",
+            "headers": {},
+            "params": [],
+            "bodyType": "none",
+            "body": "",
+            "timeout": 30000,
+            "followRedirect": true,
+            "tests": [],
+            "examples": []
+          },
+          "children": []
+        },
+        {
+          "id": "1777900193728",
+          "name": "设置",
+          "description": "设置",
+          "type": "endpoint",
+          "config": {
+            "url": "/user",
+            "method": "POST",
+            "headers": {},
+            "params": [],
+            "bodyType": "none",
+            "body": "",
+            "timeout": 30000,
+            "followRedirect": true,
+            "tests": [],
+            "examples": []
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "1777858881518",
+      "name": "测试创建分类321654",
+      "description": "测试创建分类321654",
+      "type": "category",
+      "config": {},
+      "children": [
+        {
+          "id": "1777858895156",
+          "name": "测试创建分类321654",
+          "description": "测试创建分类321654",
+          "type": "endpoint",
+          "config": {
+            "url": "/dep",
+            "method": "GET",
+            "headers": {},
+            "params": [],
+            "bodyType": "none",
+            "body": "",
+            "timeout": 30000,
+            "followRedirect": true,
+            "tests": [],
+            "examples": []
+          },
+          "children": []
+        }
+      ]
+    }
+  ]
+}

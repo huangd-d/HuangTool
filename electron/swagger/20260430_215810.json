@@ -1,0 +1,16 @@
+{
+  "id": "1777557499172",
+  "name": "测试1111",
+  "description": "测试1111",
+  "type": "project",
+  "config": {
+    "fileName": "20260430_215810.json",
+    "baseUrl": "https://jsonplaceholder.typicode.com",
+    "proxy": "",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "timeout": 30000
+  },
+  "children": []
+}

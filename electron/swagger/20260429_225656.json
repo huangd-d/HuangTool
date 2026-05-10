@@ -1,0 +1,25 @@
+{
+  "id": "1777474627999",
+  "name": "示例项目2",
+  "description": "示例项目2",
+  "type": "project",
+  "config": {
+    "fileName": "20260429_225656.json",
+    "baseUrl": "https://jsonplaceholder.typicode.com",
+    "proxy": "",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "timeout": 30000
+  },
+  "children": [
+    {
+      "id": "1777474639900",
+      "name": "部门管理",
+      "description": "部门管理",
+      "type": "category",
+      "config": {},
+      "children": []
+    }
+  ]
+}

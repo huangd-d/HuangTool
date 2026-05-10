@@ -12,8 +12,6 @@ dist
 dist-ssr
 *.local
 
-electron/docs/*
-electron/swagger/
 electron/database/
 electron/web-dist/
 electron/dist/

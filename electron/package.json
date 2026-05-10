@@ -59,7 +59,7 @@
       "icon": "build/icon.ico"
     },
     "portable": {
-      "artifactName": "HTool-${version}-Portable.${ext}"
+      "artifactName": "HTool-${version}.${ext}"
     },
     "linux": {
       "target": [
@@ -72,6 +72,11 @@
       "vendor": "HTool",
       "synopsis": "综合工具平台 - 一站式开发工具解决方案",
       "description": "基于 Electron + Vue 3 的内网前端工具箱桌面应用，提供 API 管理、技术文档预览、Office 文档预览、数据库管理四大模块。"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "huangd-d",
+      "repo": "Htool"
     }
   }
 }
