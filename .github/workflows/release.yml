@@ -46,7 +46,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}
-          path: electron/dist/*
+          path: |
+            electron/dist/*.exe
+            electron/dist/*.AppImage
+            electron/dist/*.deb
 
   release:
     needs: build
@@ -68,4 +71,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG=${GITHUB_REF#refs/tags/}
-          gh release create "$TAG" artifacts/**/* --title "$TAG" --notes "Release $TAG"
+          gh release create "$TAG" artifacts/**/*.exe artifacts/**/*.AppImage artifacts/**/*.deb --title "$TAG" --notes "Release $TAG"
