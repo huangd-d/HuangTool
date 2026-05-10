@@ -50,4 +50,4 @@ jobs:
         working-directory: electron
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: electron-builder --publish always ${{ matrix.build_cmd }}
+        run: npx electron-builder --publish always ${{ matrix.build_cmd }}
