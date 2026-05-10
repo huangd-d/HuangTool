@@ -40,7 +40,7 @@ jobs:
 
       - name: Build
         working-directory: electron
-        run: npx electron-builder ${{ matrix.build_cmd }}
+        run: npx electron-builder ${{ matrix.build_cmd }} --publish never
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
