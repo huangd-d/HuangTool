@@ -41,7 +41,7 @@ electron/                    # Electron 主进程
 ├── swagger/                 # API 项目 JSON 数据文件
 ├── database/                # 数据库连接配置持久化
 ├── docs/                    # 技术文档静态站点
-├── web-dist/                # Vite 构建输出（gitignore）
+├── web-dist/                # Vite 构建输出（已入库）
 └── package.json             # 主进程依赖 + electron-builder 配置
 
 web/                         # Vue 3 前端
@@ -115,13 +115,14 @@ npm run dev:electron     # Electron 开发
 
 ## 发布
 
-使用 GitHub Actions 自动构建和发布。打 tag 触发：
+使用 `scripts/release.sh` 一键准备发布：
 
 ```bash
-cd electron
-npm version patch           # patch/minor/major
-git push && git push --tags
+npm run release             # 默认 patch，也可 npm run release -- minor/major
+git push && git push --tags  # 推送触发 CI
 ```
+
+脚本自动完成：构建前端 → 递增版本号 → git commit + tag。
 
 也可在 GitHub Actions 页面手动触发（workflow_dispatch）。
 

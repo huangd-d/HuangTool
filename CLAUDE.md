@@ -42,7 +42,7 @@ electron/                    # Electron 主进程
 ├── swagger/                 # API 项目 JSON 数据文件（本地文件存储，无数据库）
 ├── database/                # 数据库连接配置持久化（database-connections.json）
 ├── docs/                    # 技术文档静态站点（element-plus/、vue/、vite/）
-├── web-dist/                # Vite 构建输出（gitignore，构建时生成）
+├── web-dist/                # Vite 构建输出（已入库，`scripts/release.sh` 自动构建）
 └── package.json             # 主进程依赖 + electron-builder 配置
 
 web/                         # Vue 3 前端
@@ -96,6 +96,7 @@ web/                         # Vue 3 前端
 └── package.json             # 前端依赖
 
 package.json                 # 根目录构建编排脚本
+scripts/release.sh           # 一键发布脚本（构建前端 + 递增版本 + commit + tag）
 ```
 
 ## 架构：BaseWindow + 多 WebContentsView
@@ -185,7 +186,7 @@ npm run build:linux      # 构建 Linux 安装包
 ## 打包架构
 
 - **electron-builder**：Windows (Portable) + Linux (AppImage/deb)
-- **GitHub Actions 发布**：`.github/workflows/release.yml`，tag `v*` 触发 + workflow_dispatch 手动触发，win/linux 矩阵构建，`--publish always` 自动上传到 GitHub Release
+- **GitHub Actions 发布**：`.github/workflows/release.yml`，tag `v*` 触发 + workflow_dispatch 手动触发，win/linux 矩阵构建（`--publish never`），build job 上传 artifact → release job 用 `gh release create` 统一发布
 - **publish 配置**：`provider: github`，owner: `huangd-d`，repo: `Htool`
 - **产物命名**：`HTool-${version}.exe`（Windows）、`HTool-${version}.AppImage` + `.deb`（Linux）
 - **资源分离**：`web-dist/`、`swagger/` 和 `docs/` 通过 `extraResources` 放在 asar 外部（swagger 需运行时写入，docs 体积大，web-dist 为前端构建产物）。`database/` 目录目前未加入 extraResources，且 `config.js` 使用 `__dirname` 相对路径，生产环境写入可能需适配
@@ -204,5 +205,6 @@ npm run build:linux      # 构建 Linux 安装包
 - **安全**：`contextIsolation: true`, `nodeIntegration: false`, app:// 及 docs:// 协议含路径遍历防护
 - **样式系统**：暗黑橙主题 CSS 变量（`--accent: #FF9000`，Arial 字体栈，13px 基础字号），滚动条统一为黑色轨道 + 橙色滑块（`--accent`）
 - **查看版本信息**：使用package.json 中的版本号
-- **发布流程**：`/git tag`（或 `cd electron && npm version patch && git push --tags`）触发 GitHub Actions 自动构建 + 发布到 GitHub Release
+- **Node 版本**：24.15.0（CI 和本地统一）
+- **发布流程**：`/git tag` 或 `npm run release`（即 `scripts/release.sh`），脚本自动构建前端 + 递增版本号 + git commit + tag，`git push && git push --tags` 触发 CI
 - **忽略**：electron/database 目录下的所有文件，在ai查询时忽略
